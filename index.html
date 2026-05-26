@@ -93,9 +93,18 @@
             <input class="input" name="name" placeholder="Full name" required>
             <input class="input" name="email" type="email" placeholder="Email" required>
             <input class="input" name="address" placeholder="Shipping address" required>
-            <button id="checkoutButton" class="primary-button" type="submit">Pay with Stripe</button>
+            <button id="checkoutButton" class="primary-button" type="submit">Continue to secure checkout</button>
           </form>
-          <p class="microcopy">Secure payment is handled by Stripe Checkout.</p>
+          <div class="payment-methods" aria-label="Supported payment methods">
+            <span>Cards</span>
+            <span>Cash App Pay</span>
+            <span>PayPal</span>
+            <span>Apple Pay</span>
+            <span>Google Pay</span>
+            <span>Link</span>
+            <span>Pay Later</span>
+          </div>
+          <p class="microcopy">Secure checkout is handled by Stripe. Available payment methods depend on Stripe eligibility and dashboard settings.</p>
         </div>
       </div>
     </aside>

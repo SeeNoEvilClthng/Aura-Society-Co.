@@ -151,6 +151,9 @@ async function createCheckoutSession(request, response) {
 
   const params = new URLSearchParams();
   params.set("mode", "payment");
+  // Do not set payment_method_types here. Stripe Checkout will show eligible methods
+  // enabled in the Stripe Dashboard, such as cards, Cash App Pay, PayPal, wallets,
+  // Link, and buy-now-pay-later options where available.
   params.set("success_url", `${SITE_URL}/success.html?session_id={CHECKOUT_SESSION_ID}`);
   params.set("cancel_url", `${SITE_URL}/index.html`);
   params.set("shipping_address_collection[allowed_countries][0]", "US");

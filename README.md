@@ -17,6 +17,8 @@ Online fragrance marketplace prototype with a customer storefront, Stripe Checko
 
 The checkout flow creates a Stripe Checkout Session from the cart and redirects the customer to Stripe-hosted payment.
 
+Stripe Checkout is configured to use dashboard-managed dynamic payment methods. To show methods like Cash App Pay, PayPal, Apple Pay, Google Pay, Link, Klarna, Afterpay/Clearpay, Affirm, and eligible bank options, enable them in Stripe Dashboard under **Settings > Payment methods**. Stripe decides which enabled methods appear based on customer location, currency, amount, device/browser, and account eligibility.
+
 ## Vercel Setup
 
 Use the repository root as the Vercel project root. Leave the framework preset as "Other" or static/default.

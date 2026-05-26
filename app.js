@@ -340,7 +340,7 @@ checkoutForm.addEventListener("submit", async (event) => {
   } catch (error) {
     showToast(error.message);
     checkoutButton.disabled = false;
-    checkoutButton.textContent = "Pay with Stripe";
+    checkoutButton.textContent = "Continue to secure checkout";
   }
 });
 

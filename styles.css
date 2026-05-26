@@ -785,6 +785,25 @@ h3 {
   gap: 10px;
 }
 
+.payment-methods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.payment-methods span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(255, 245, 215, 0.94);
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
 .microcopy {
   margin: 0;
   color: var(--muted);
