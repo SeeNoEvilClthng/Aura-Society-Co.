@@ -121,7 +121,7 @@ async function handleProducts(request, response) {
       return;
     }
 
-    writeProducts(products.map(normalizeProduct));
+    writeProducts(dedupeProducts(products.map(normalizeProduct)));
     sendJson(response, 200, { products: readProducts() });
     return;
   }
@@ -322,6 +322,24 @@ function normalizeProduct(product) {
     stock: clampInteger(product.stock, 0, 999999),
     image: sanitize(product.image, 10_000_000)
   };
+}
+
+function dedupeProducts(products) {
+  const seen = new Set();
+  return products.filter((product) => {
+    const key = getProductDuplicateKey(product);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function getProductDuplicateKey(product) {
+  return [
+    product.name,
+    product.brand,
+    product.size
+  ].map((value) => String(value || "").trim().toLowerCase()).join("|");
 }
 
 function sanitize(value, maxLength) {

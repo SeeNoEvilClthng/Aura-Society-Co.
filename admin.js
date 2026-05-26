@@ -324,8 +324,16 @@ form.addEventListener("submit", async (event) => {
   saveProductButton.disabled = true;
   saveProductButton.textContent = "Saving...";
 
-  const id = productId.value || `${slugify(productName.value)}-${Date.now().toString(36)}`;
-  const existing = products.find((product) => product.id === id);
+  const duplicateKey = getProductDuplicateKey({
+    name: productName.value,
+    brand: productBrand.value,
+    size: productSize.value
+  });
+  const existing = products.find((product) => {
+    if (productId.value && product.id === productId.value) return true;
+    return getProductDuplicateKey(product) === duplicateKey;
+  });
+  const id = existing?.id || `${slugify(productName.value)}-${Date.now().toString(36)}`;
   const product = {
     id,
     name: productName.value.trim(),
@@ -342,7 +350,8 @@ form.addEventListener("submit", async (event) => {
 
   try {
     if (existing) {
-      products = products.map((entry) => entry.id === id ? product : entry);
+      products = products.filter((entry) => getProductDuplicateKey(entry) !== duplicateKey || entry.id === existing.id);
+      products = products.map((entry) => entry.id === existing.id ? product : entry);
     } else {
       products = [product, ...products];
     }
@@ -351,7 +360,7 @@ form.addEventListener("submit", async (event) => {
     await loadProducts();
     clearForm();
     refreshProductsUI();
-    showToast(existing ? "Product updated." : "Product added.");
+    showToast(existing ? "Matching fragrance updated." : "Product added.");
   } catch (error) {
     showToast(error.message);
   } finally {
@@ -375,7 +384,8 @@ productList.addEventListener("click", async (event) => {
     const confirmed = window.confirm(`Delete ${product.name}?`);
     if (!confirmed) return;
     try {
-      products = products.filter((entry) => entry.id !== product.id);
+      const duplicateKey = getProductDuplicateKey(product);
+      products = products.filter((entry) => entry.id !== product.id && getProductDuplicateKey(entry) !== duplicateKey);
       await saveProducts();
       await loadProducts();
       refreshProductsUI();
@@ -385,6 +395,14 @@ productList.addEventListener("click", async (event) => {
     }
   }
 });
+
+function getProductDuplicateKey(product) {
+  return [
+    product.name,
+    product.brand,
+    product.size
+  ].map((value) => String(value || "").trim().toLowerCase()).join("|");
+}
 
 resetButton.addEventListener("click", clearForm);
 
