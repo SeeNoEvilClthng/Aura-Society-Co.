@@ -10,6 +10,7 @@ const sampleProducts = [
     price: 86,
     size: "50 ml",
     family: "Floral",
+    collection: "Signature Collection",
     notes: "Pear blossom, jasmine silk, white musk",
     description: "A clean floral with soft projection and a polished, airy finish.",
     stock: 18,
@@ -22,6 +23,7 @@ const sampleProducts = [
     price: 96,
     size: "50 ml",
     family: "Amber",
+    collection: "Evening Reserve",
     notes: "Saffron, cedar, vanilla smoke",
     description: "Warm, resinous, and refined for evenings that linger.",
     stock: 9,
@@ -34,6 +36,7 @@ const sampleProducts = [
     price: 74,
     size: "30 ml",
     family: "Citrus",
+    collection: "Daily Rituals",
     notes: "Bergamot, neroli, mineral woods",
     description: "Bright citrus with a dry woods base for everyday wear.",
     stock: 24,
@@ -58,6 +61,8 @@ const productBrand = document.querySelector("#productBrand");
 const productPrice = document.querySelector("#productPrice");
 const productSize = document.querySelector("#productSize");
 const productFamily = document.querySelector("#productFamily");
+const productCollection = document.querySelector("#productCollection");
+const collectionOptions = document.querySelector("#collectionOptions");
 const productStock = document.querySelector("#productStock");
 const productNotes = document.querySelector("#productNotes");
 const productDescription = document.querySelector("#productDescription");
@@ -90,14 +95,9 @@ async function setAdminVisible(isVisible) {
 async function loadProducts() {
   try {
     productList.innerHTML = '<div class="empty-state">Loading products...</div>';
-    const response = await fetch("/api/products");
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "Products could not load.");
-    }
-
+    const data = await requestJson("/api/products");
     products = Array.isArray(data.products) ? data.products : [];
+    renderCollectionOptions();
   } catch (error) {
     products = [];
     productList.innerHTML = `<div class="empty-state">${error.message}</div>`;
@@ -105,21 +105,38 @@ async function loadProducts() {
   }
 }
 
+function renderCollectionOptions() {
+  const collections = [...new Set(products.map((product) => product.collection).filter(Boolean))].sort();
+  collectionOptions.innerHTML = collections.map((collection) => `<option value="${collection}"></option>`).join("");
+}
+
 async function saveProducts() {
-  const response = await fetch("/api/products", {
+  const data = await requestJson("/api/products", {
     method: "PUT",
     headers: {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({ products })
   });
-  const data = await response.json();
 
+  products = Array.isArray(data.products) ? data.products : products;
+}
+
+async function requestJson(url, options) {
+  const response = await fetch(url, options);
+  const contentType = response.headers.get("content-type") || "";
+
+  if (!contentType.includes("application/json")) {
+    await response.text();
+    throw new Error("Admin product saving requires the Node server. Run npm start and open http://localhost:4173/admin.html.");
+  }
+
+  const data = await response.json();
   if (!response.ok) {
     throw new Error(data.error || "Products could not save.");
   }
 
-  products = Array.isArray(data.products) ? data.products : products;
+  return data;
 }
 
 function slugify(value) {
@@ -164,6 +181,7 @@ function fillForm(product) {
   productPrice.value = product.price;
   productSize.value = product.size;
   productFamily.value = product.family;
+  productCollection.value = product.collection || "";
   productStock.value = product.stock;
   productNotes.value = product.notes;
   productDescription.value = product.description;
@@ -183,8 +201,8 @@ function renderProducts() {
       <div class="admin-thumb">${productImageMarkup(product)}</div>
       <div>
         <strong>${product.name}</strong>
-        <p>${product.brand} | ${product.family} | $${Number(product.price).toFixed(2)}</p>
-        <p>${product.stock} in stock | ${product.size}</p>
+        <p>${product.brand} | ${product.collection || "No collection"} | $${Number(product.price).toFixed(2)}</p>
+        <p>${product.family} | ${product.stock} in stock | ${product.size}</p>
       </div>
       <div class="admin-actions">
         <button class="mini-button" type="button" data-edit="${product.id}">Edit</button>
@@ -251,6 +269,7 @@ form.addEventListener("submit", async (event) => {
     price: Number(productPrice.value),
     size: productSize.value.trim(),
     family: productFamily.value,
+    collection: productCollection.value.trim() || "Signature Collection",
     stock: Number(productStock.value),
     notes: productNotes.value.trim(),
     description: productDescription.value.trim(),
@@ -267,6 +286,7 @@ form.addEventListener("submit", async (event) => {
     }
 
     await saveProducts();
+    renderCollectionOptions();
     renderProducts();
     clearForm();
   } catch (error) {
@@ -291,6 +311,7 @@ productList.addEventListener("click", async (event) => {
     try {
       products = products.filter((entry) => entry.id !== product.id);
       await saveProducts();
+      renderCollectionOptions();
       renderProducts();
       showToast("Product deleted.");
     } catch (error) {
@@ -306,6 +327,7 @@ seedButton.addEventListener("click", async () => {
     products = sampleProducts;
     await saveProducts();
     clearForm();
+    renderCollectionOptions();
     renderProducts();
     showToast("Sample products restored.");
   } catch (error) {

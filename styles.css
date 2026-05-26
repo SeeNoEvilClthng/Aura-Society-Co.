@@ -477,6 +477,57 @@ h3 {
   font-weight: 900;
 }
 
+.collection-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.collection-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 14px;
+  white-space: nowrap;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 245, 215, 0.94);
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 900;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
+}
+
+.collection-tab small {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: rgba(108, 67, 7, 0.12);
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.collection-tab:hover,
+.collection-tab.is-active {
+  border-color: var(--gold);
+  background: linear-gradient(115deg, #4c2f07, var(--bronze), #e7b945);
+  color: #fff8df;
+  box-shadow: var(--glow);
+  transform: translateY(-1px);
+}
+
+.collection-tab:hover small,
+.collection-tab.is-active small {
+  background: rgba(255, 248, 223, 0.22);
+  color: #fff8df;
+}
+
 .product-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

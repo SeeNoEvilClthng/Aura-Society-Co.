@@ -6,9 +6,11 @@ const currency = new Intl.NumberFormat("en-US", {
 });
 
 let products = [];
+let activeCollection = "all";
 let cart = loadCart();
 
 const productGrid = document.querySelector("#productGrid");
+const collectionTabs = document.querySelector("#collectionTabs");
 const productCount = document.querySelector("#productCount");
 const searchInput = document.querySelector("#searchInput");
 const familyFilter = document.querySelector("#familyFilter");
@@ -34,21 +36,62 @@ async function loadProducts() {
   productGrid.innerHTML = '<div class="empty-state">Loading fragrances...</div>';
 
   try {
-    const response = await fetch("/api/products");
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "Products could not load.");
-    }
-
-    products = Array.isArray(data.products) ? data.products : [];
+    products = await fetchProducts();
     populateFamilies();
+    renderCollectionTabs();
     renderProducts();
     renderCart();
   } catch (error) {
     productGrid.innerHTML = `<div class="empty-state">${error.message}</div>`;
     showToast(error.message);
   }
+}
+
+async function fetchProducts() {
+  try {
+    const data = await requestJson("/api/products");
+    return Array.isArray(data.products) ? data.products : [];
+  } catch {
+    const fallback = await requestJson("/catalog/products.json");
+    return Array.isArray(fallback) ? fallback : [];
+  }
+}
+
+async function requestJson(url, options) {
+  const response = await fetch(url, options);
+  const contentType = response.headers.get("content-type") || "";
+
+  if (!contentType.includes("application/json")) {
+    const text = await response.text();
+    throw new Error(`Expected JSON from ${url}, received: ${text.slice(0, 80)}`);
+  }
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Products could not load.");
+  }
+
+  return data;
+}
+
+function renderCollectionTabs() {
+  const collections = [...new Set(products.map((product) => product.collection).filter(Boolean))].sort();
+  const tabs = ["all", ...collections];
+
+  collectionTabs.innerHTML = tabs.map((collection) => {
+    const isActive = collection === activeCollection;
+    const label = collection === "all" ? "All Collections" : collection;
+    const count = collection === "all"
+      ? products.length
+      : products.filter((product) => product.collection === collection).length;
+
+    return `
+      <button class="collection-tab ${isActive ? "is-active" : ""}" type="button" data-collection="${collection}" aria-pressed="${isActive}">
+        <span>${label}</span>
+        <small>${count}</small>
+      </button>
+    `;
+  }).join("");
 }
 
 function saveCart() {
@@ -80,10 +123,11 @@ function filteredProducts() {
   const sort = sortSelect.value;
 
   const filtered = products.filter((product) => {
-    const haystack = `${product.name} ${product.brand} ${product.notes} ${product.description}`.toLowerCase();
+    const haystack = `${product.name} ${product.brand} ${product.collection || ""} ${product.notes} ${product.description}`.toLowerCase();
     const matchesSearch = !query || haystack.includes(query);
     const matchesFamily = family === "all" || product.family === family;
-    return matchesSearch && matchesFamily;
+    const matchesCollection = activeCollection === "all" || product.collection === activeCollection;
+    return matchesSearch && matchesFamily && matchesCollection;
   });
 
   return filtered.sort((a, b) => {
@@ -116,7 +160,7 @@ function renderProducts() {
           <p class="notes">${product.notes}</p>
         </div>
         <div class="product-meta">
-          <span>${product.family}</span>
+          <span>${product.collection || product.family}</span>
           <span>${product.stock > 0 ? `${product.stock} in stock` : "Sold out"}</span>
         </div>
         <div class="price-row">
@@ -217,6 +261,15 @@ productGrid.addEventListener("click", (event) => {
     addToCart(button.dataset.add);
     openCart();
   }
+});
+
+collectionTabs.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-collection]");
+  if (!button) return;
+
+  activeCollection = button.dataset.collection;
+  renderCollectionTabs();
+  renderProducts();
 });
 
 cartItems.addEventListener("click", (event) => {

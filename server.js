@@ -10,6 +10,8 @@ const SITE_URL = process.env.SITE_URL || `http://localhost:${PORT}`;
 const publicDir = __dirname;
 const dataDir = path.join(__dirname, "data");
 const productsPath = path.join(dataDir, "products.json");
+const catalogDir = path.join(__dirname, "catalog");
+const catalogPath = path.join(catalogDir, "products.json");
 
 const sampleProducts = [
   {
@@ -19,6 +21,7 @@ const sampleProducts = [
     price: 86,
     size: "50 ml",
     family: "Floral",
+    collection: "Signature Collection",
     notes: "Pear blossom, jasmine silk, white musk",
     description: "A clean floral with soft projection and a polished, airy finish.",
     stock: 18,
@@ -31,6 +34,7 @@ const sampleProducts = [
     price: 96,
     size: "50 ml",
     family: "Amber",
+    collection: "Evening Reserve",
     notes: "Saffron, cedar, vanilla smoke",
     description: "Warm, resinous, and refined for evenings that linger.",
     stock: 9,
@@ -43,6 +47,7 @@ const sampleProducts = [
     price: 74,
     size: "30 ml",
     family: "Citrus",
+    collection: "Daily Rituals",
     notes: "Bergamot, neroli, mineral woods",
     description: "Bright citrus with a dry woods base for everyday wear.",
     stock: 24,
@@ -280,8 +285,13 @@ function writeProducts(products) {
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
   }
+  if (!fs.existsSync(catalogDir)) {
+    fs.mkdirSync(catalogDir, { recursive: true });
+  }
 
-  fs.writeFileSync(productsPath, `${JSON.stringify(products, null, 2)}\n`);
+  const content = `${JSON.stringify(products, null, 2)}\n`;
+  fs.writeFileSync(productsPath, content);
+  fs.writeFileSync(catalogPath, content);
 }
 
 function normalizeProduct(product) {
@@ -292,6 +302,7 @@ function normalizeProduct(product) {
     price: Number.isFinite(Number(product.price)) ? Number(product.price) : 0,
     size: sanitize(product.size, 60),
     family: sanitize(product.family, 80),
+    collection: sanitize(product.collection, 120) || "Signature Collection",
     notes: sanitize(product.notes, 240),
     description: sanitize(product.description, 600),
     stock: clampInteger(product.stock, 0, 999999),
