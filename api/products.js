@@ -3,6 +3,7 @@ const path = require("path");
 
 const PRODUCT_KEY = "aura-society-products";
 const catalogPath = path.join(process.cwd(), "catalog", "products.json");
+const MAX_REQUEST_BODY_BYTES = 100_000_000;
 
 module.exports = async function handler(request, response) {
   applyCors(response);
@@ -19,6 +20,16 @@ module.exports = async function handler(request, response) {
       return;
     }
 
+    if (request.method === "POST") {
+      const payload = await readPayload(request);
+      const product = normalizeProduct(payload.product || payload);
+      const products = upsertProduct(await readProducts(), product);
+
+      await writeProducts(products);
+      sendJson(response, 200, { product, products });
+      return;
+    }
+
     if (request.method === "PUT") {
       const payload = await readPayload(request);
       const products = Array.isArray(payload.products) ? payload.products : payload;
@@ -31,6 +42,23 @@ module.exports = async function handler(request, response) {
       const normalizedProducts = dedupeProducts(products.map(normalizeProduct));
       await writeProducts(normalizedProducts);
       sendJson(response, 200, { products: normalizedProducts });
+      return;
+    }
+
+    if (request.method === "DELETE") {
+      const requestUrl = new URL(request.url, "http://localhost");
+      const productId = sanitize(requestUrl.searchParams.get("id"), 120);
+      const products = await readProducts();
+      const product = products.find((entry) => entry.id === productId);
+
+      if (!product) {
+        sendJson(response, 404, { error: "Product not found." });
+        return;
+      }
+
+      const updatedProducts = removeProduct(products, product);
+      await writeProducts(updatedProducts);
+      sendJson(response, 200, { products: updatedProducts });
       return;
     }
 
@@ -201,7 +229,7 @@ async function readPayload(request) {
     let text = "";
     request.on("data", (chunk) => {
       text += chunk;
-      if (text.length > 12_000_000) {
+      if (text.length > MAX_REQUEST_BODY_BYTES) {
         reject(new Error("Request body too large."));
       }
     });
@@ -238,6 +266,23 @@ function dedupeProducts(products) {
   });
 }
 
+function upsertProduct(products, product) {
+  const duplicateKey = getProductDuplicateKey(product);
+  const existing = products.find((entry) => entry.id === product.id || getProductDuplicateKey(entry) === duplicateKey);
+  if (!existing) {
+    return [product, ...products];
+  }
+
+  return dedupeProducts(products
+    .filter((entry) => getProductDuplicateKey(entry) !== duplicateKey || entry.id === existing.id)
+    .map((entry) => entry.id === existing.id ? { ...product, id: existing.id } : entry));
+}
+
+function removeProduct(products, product) {
+  const duplicateKey = getProductDuplicateKey(product);
+  return products.filter((entry) => entry.id !== product.id && getProductDuplicateKey(entry) !== duplicateKey);
+}
+
 function getProductDuplicateKey(product) {
   return [
     product.name,
@@ -258,7 +303,7 @@ function clampInteger(value, min, max) {
 
 function applyCors(response) {
   response.setHeader("Access-Control-Allow-Origin", "*");
-  response.setHeader("Access-Control-Allow-Methods", "GET, HEAD, PUT, OPTIONS");
+  response.setHeader("Access-Control-Allow-Methods", "GET, HEAD, PUT, POST, DELETE, OPTIONS");
   response.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 

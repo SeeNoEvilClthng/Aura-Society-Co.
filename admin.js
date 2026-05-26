@@ -230,6 +230,26 @@ async function saveProducts() {
   products = Array.isArray(data.products) ? data.products : products;
 }
 
+async function saveProduct(product) {
+  const data = await requestJson("/api/products", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ product })
+  });
+
+  products = Array.isArray(data.products) ? data.products : products;
+}
+
+async function deleteProduct(product) {
+  const data = await requestJson(`/api/products?id=${encodeURIComponent(product.id)}`, {
+    method: "DELETE"
+  });
+
+  products = Array.isArray(data.products) ? data.products : products;
+}
+
 async function saveSite() {
   const data = await requestJson("/api/site", {
     method: "PUT",
@@ -554,14 +574,7 @@ form.addEventListener("submit", async (event) => {
   };
 
   try {
-    if (existing) {
-      products = products.filter((entry) => getProductDuplicateKey(entry) !== duplicateKey || entry.id === existing.id);
-      products = products.map((entry) => entry.id === existing.id ? product : entry);
-    } else {
-      products = [product, ...products];
-    }
-
-    await saveProducts();
+    await saveProduct(product);
     await loadProducts();
     clearForm();
     refreshProductsUI();
@@ -589,9 +602,7 @@ productList.addEventListener("click", async (event) => {
     const confirmed = window.confirm(`Delete ${product.name}?`);
     if (!confirmed) return;
     try {
-      const duplicateKey = getProductDuplicateKey(product);
-      products = products.filter((entry) => entry.id !== product.id && getProductDuplicateKey(entry) !== duplicateKey);
-      await saveProducts();
+      await deleteProduct(product);
       await loadProducts();
       refreshProductsUI();
       showToast("Product deleted.");

@@ -49,4 +49,6 @@ Vercel serverless functions cannot permanently save changes to files inside the 
 
 Products are stored in `data/products.json` through the local Node server. Homepage content is stored in `data/site.json`. The storefront and admin portal use `/api/products` and `/api/site`, so admin changes show up for every visitor using the same deployed server.
 
+The admin portal saves individual products with `POST /api/products` and deletes individual products with `DELETE /api/products?id=...`, so adding or editing one fragrance no longer requires uploading the full catalog each time. This removes the app-level cap caused by whole-catalog saves and lets the inventory grow with the connected database/storage limits.
+
 For a production store, connect the admin portal to a database or commerce platform and calculate product prices server-side instead of trusting browser data.

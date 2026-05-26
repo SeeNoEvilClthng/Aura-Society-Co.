@@ -7,6 +7,7 @@ loadEnv();
 const PORT = Number(process.env.PORT || 4173);
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
 const SITE_URL = process.env.SITE_URL || `http://localhost:${PORT}`;
+const MAX_REQUEST_BODY_BYTES = 100_000_000;
 const publicDir = __dirname;
 const dataDir = path.join(__dirname, "data");
 const productsPath = path.join(dataDir, "products.json");
@@ -137,8 +138,20 @@ server.listen(PORT, () => {
 });
 
 async function handleProducts(request, response) {
+  const requestUrl = new URL(request.url, SITE_URL);
+
   if (request.method === "GET" || request.method === "HEAD") {
     sendJson(response, 200, { products: readProducts() });
+    return;
+  }
+
+  if (request.method === "POST") {
+    const payload = await readJson(request);
+    const product = normalizeProduct(payload.product || payload);
+    const products = upsertProduct(readProducts(), product);
+
+    writeProducts(products);
+    sendJson(response, 200, { product, products });
     return;
   }
 
@@ -152,6 +165,21 @@ async function handleProducts(request, response) {
     }
 
     writeProducts(dedupeProducts(products.map(normalizeProduct)));
+    sendJson(response, 200, { products: readProducts() });
+    return;
+  }
+
+  if (request.method === "DELETE") {
+    const productId = sanitize(requestUrl.searchParams.get("id"), 120);
+    const products = readProducts();
+    const product = products.find((entry) => entry.id === productId);
+
+    if (!product) {
+      sendJson(response, 404, { error: "Product not found." });
+      return;
+    }
+
+    writeProducts(removeProduct(products, product));
     sendJson(response, 200, { products: readProducts() });
     return;
   }
@@ -297,7 +325,7 @@ function readJson(request) {
     let body = "";
     request.on("data", (chunk) => {
       body += chunk;
-      if (body.length > 12_000_000) {
+      if (body.length > MAX_REQUEST_BODY_BYTES) {
         request.destroy();
         reject(new Error("Request body too large."));
       }
@@ -320,7 +348,7 @@ function sendJson(response, statusCode, data) {
 
 function applyCors(response) {
   response.setHeader("Access-Control-Allow-Origin", "*");
-  response.setHeader("Access-Control-Allow-Methods", "GET, HEAD, PUT, POST, OPTIONS");
+  response.setHeader("Access-Control-Allow-Methods", "GET, HEAD, PUT, POST, DELETE, OPTIONS");
   response.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
@@ -446,6 +474,23 @@ function dedupeProducts(products) {
     seen.add(key);
     return true;
   });
+}
+
+function upsertProduct(products, product) {
+  const duplicateKey = getProductDuplicateKey(product);
+  const existing = products.find((entry) => entry.id === product.id || getProductDuplicateKey(entry) === duplicateKey);
+  if (!existing) {
+    return [product, ...products];
+  }
+
+  return dedupeProducts(products
+    .filter((entry) => getProductDuplicateKey(entry) !== duplicateKey || entry.id === existing.id)
+    .map((entry) => entry.id === existing.id ? { ...product, id: existing.id } : entry));
+}
+
+function removeProduct(products, product) {
+  const duplicateKey = getProductDuplicateKey(product);
+  return products.filter((entry) => entry.id !== product.id && getProductDuplicateKey(entry) !== duplicateKey);
 }
 
 function getProductDuplicateKey(product) {
