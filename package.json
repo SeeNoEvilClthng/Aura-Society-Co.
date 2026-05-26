@@ -1,0 +1,12 @@
+{
+  "name": "aura-society-co",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Aura Society Co. fragrance marketplace with Stripe Checkout.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

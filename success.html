@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Order Confirmed | Aura Society Co.</title>
+    <meta name="description" content="Aura Society Co. order confirmation.">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html">
+        <img class="brand-logo" src="assets/branding/aura-society-logo.png" alt="Aura Society Co.">
+      </a>
+      <nav class="nav-actions" aria-label="Primary navigation">
+        <a href="index.html#shop">Shop</a>
+        <a href="admin.html">Admin</a>
+      </nav>
+    </header>
+
+    <main class="login-shell">
+      <section class="login-card">
+        <p class="eyebrow">Payment received</p>
+        <h1>Thank You</h1>
+        <p>Your Stripe checkout was completed. A confirmation email will come from Stripe if email receipts are enabled.</p>
+        <a class="primary-link" href="index.html#shop">Continue shopping</a>
+      </section>
+    </main>
+
+    <script>
+      localStorage.removeItem("auraSocietyCart");
+    </script>
+  </body>
+</html>

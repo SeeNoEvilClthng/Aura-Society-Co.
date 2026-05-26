@@ -1,4 +1,7 @@
 const PRODUCTS_KEY = "auraSocietyProducts";
+const AUTH_KEY = "auraSocietyAdminAuth";
+const ADMIN_USERNAME = "XThaBoss2";
+const ADMIN_PASSWORD = "ZaraAleah12!";
 
 const sampleProducts = [
   {
@@ -42,6 +45,13 @@ const sampleProducts = [
 let products = loadProducts();
 let selectedImage = "";
 
+const loginShell = document.querySelector("#loginShell");
+const adminShell = document.querySelector("#adminShell");
+const loginForm = document.querySelector("#loginForm");
+const adminUsername = document.querySelector("#adminUsername");
+const adminPassword = document.querySelector("#adminPassword");
+const loginError = document.querySelector("#loginError");
+const logoutButton = document.querySelector("#logoutButton");
 const form = document.querySelector("#productForm");
 const productId = document.querySelector("#productId");
 const productName = document.querySelector("#productName");
@@ -59,6 +69,23 @@ const resetButton = document.querySelector("#resetButton");
 const seedButton = document.querySelector("#seedButton");
 const exportButton = document.querySelector("#exportButton");
 const toast = document.querySelector("#toast");
+
+function isAuthenticated() {
+  return localStorage.getItem(AUTH_KEY) === "true";
+}
+
+function setAdminVisible(isVisible) {
+  loginShell.classList.toggle("hidden", isVisible);
+  adminShell.classList.toggle("hidden", !isVisible);
+  logoutButton.classList.toggle("hidden", !isVisible);
+  exportButton.classList.toggle("hidden", !isVisible);
+
+  if (isVisible) {
+    renderProducts();
+  } else {
+    window.setTimeout(() => adminUsername.focus(), 0);
+  }
+}
 
 function loadProducts() {
   const stored = localStorage.getItem(PRODUCTS_KEY);
@@ -109,7 +136,9 @@ function clearForm() {
   productId.value = "";
   selectedImage = "";
   renderPreview("");
-  productName.focus();
+  if (!adminShell.classList.contains("hidden")) {
+    productName.focus();
+  }
 }
 
 function fillForm(product) {
@@ -154,6 +183,33 @@ function showToast(message) {
   toast.classList.add("is-visible");
   window.setTimeout(() => toast.classList.remove("is-visible"), 2400);
 }
+
+loginForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  const username = adminUsername.value.trim();
+  const password = adminPassword.value;
+
+  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    localStorage.setItem(AUTH_KEY, "true");
+    loginError.textContent = "";
+    loginForm.reset();
+    setAdminVisible(true);
+    showToast("Admin unlocked.");
+    return;
+  }
+
+  loginError.textContent = "Username or password is incorrect.";
+  adminPassword.value = "";
+  adminPassword.focus();
+});
+
+logoutButton.addEventListener("click", () => {
+  localStorage.removeItem(AUTH_KEY);
+  clearForm();
+  setAdminVisible(false);
+  showToast("Logged out.");
+});
 
 productImage.addEventListener("change", () => {
   const file = productImage.files[0];
@@ -239,4 +295,4 @@ exportButton.addEventListener("click", () => {
   URL.revokeObjectURL(url);
 });
 
-renderProducts();
+setAdminVisible(isAuthenticated());

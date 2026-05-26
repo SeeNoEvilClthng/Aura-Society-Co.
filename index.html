@@ -10,8 +10,7 @@
   <body>
     <header class="site-header">
       <a class="brand" href="index.html" aria-label="Aura Society Co. home">
-        <span class="brand-mark">AS</span>
-        <span>Aura Society Co.</span>
+        <img class="brand-logo" src="assets/branding/aura-society-logo.png" alt="Aura Society Co.">
       </a>
       <nav class="nav-actions" aria-label="Primary navigation">
         <a href="#shop">Shop</a>
@@ -27,7 +26,8 @@
       <section class="market-hero" aria-labelledby="heroTitle">
         <div class="hero-copy">
           <p class="eyebrow">Independent fragrance marketplace</p>
-          <h1 id="heroTitle">Aura Society Co.</h1>
+          <img class="hero-logo" src="assets/branding/aura-society-logo.png" alt="Aura Society Co.">
+          <h1 id="heroTitle">Elevate Your Senses</h1>
           <p>Discover polished signature scents, intimate oils, and limited blends curated for daily ritual and evening presence.</p>
           <a class="primary-link" href="#shop">Shop fragrances</a>
         </div>
@@ -92,9 +92,9 @@
             <input class="input" name="name" placeholder="Full name" required>
             <input class="input" name="email" type="email" placeholder="Email" required>
             <input class="input" name="address" placeholder="Shipping address" required>
-            <button class="primary-button" type="submit">Place demo order</button>
+            <button id="checkoutButton" class="primary-button" type="submit">Pay with Stripe</button>
           </form>
-          <p class="microcopy">Demo checkout stores no payment details. Connect Stripe or Shopify later for live orders.</p>
+          <p class="microcopy">Secure payment is handled by Stripe Checkout.</p>
         </div>
       </div>
     </aside>

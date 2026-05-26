@@ -10,16 +10,33 @@
   <body>
     <header class="site-header">
       <a class="brand" href="index.html">
-        <span class="brand-mark">AS</span>
-        <span>Aura Society Co.</span>
+        <img class="brand-logo" src="assets/branding/aura-society-logo.png" alt="Aura Society Co.">
       </a>
       <nav class="nav-actions" aria-label="Admin navigation">
         <a href="index.html">Storefront</a>
-        <button id="exportButton" class="secondary-button" type="button">Export JSON</button>
+        <button id="logoutButton" class="secondary-button hidden" type="button">Log out</button>
+        <button id="exportButton" class="secondary-button hidden" type="button">Export JSON</button>
       </nav>
     </header>
 
-    <main class="admin-shell">
+    <main id="loginShell" class="login-shell">
+      <form id="loginForm" class="login-card">
+        <p class="eyebrow">Admin access</p>
+        <h1>Sign In</h1>
+        <label>
+          Username
+          <input id="adminUsername" class="input" autocomplete="username" required>
+        </label>
+        <label>
+          Password
+          <input id="adminPassword" class="input" type="password" autocomplete="current-password" required>
+        </label>
+        <button class="primary-button" type="submit">Unlock admin</button>
+        <p id="loginError" class="login-error" role="alert"></p>
+      </form>
+    </main>
+
+    <main id="adminShell" class="admin-shell hidden">
       <section class="admin-intro">
         <p class="eyebrow">Product admin</p>
         <h1>Manage Fragrances</h1>

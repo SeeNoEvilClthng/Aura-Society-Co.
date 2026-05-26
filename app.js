@@ -59,6 +59,7 @@ const cartCount = document.querySelector("#cartCount");
 const cartTotal = document.querySelector("#cartTotal");
 const cartEmpty = document.querySelector("#cartEmpty");
 const checkoutForm = document.querySelector("#checkoutForm");
+const checkoutButton = document.querySelector("#checkoutButton");
 const toast = document.querySelector("#toast");
 
 function loadProducts() {
@@ -266,14 +267,57 @@ cartDrawer.addEventListener("click", (event) => {
   if (event.target === cartDrawer) closeCart();
 });
 
-checkoutForm.addEventListener("submit", (event) => {
+checkoutForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  cart = [];
-  saveCart();
-  renderCart();
-  closeCart();
-  checkoutForm.reset();
-  showToast("Demo order placed. Add live payments when you are ready.");
+
+  const activeItems = cart
+    .map((item) => ({ ...item, product: products.find((product) => product.id === item.id) }))
+    .filter((item) => item.product);
+
+  if (!activeItems.length) {
+    showToast("Your cart is empty.");
+    return;
+  }
+
+  const formData = new FormData(checkoutForm);
+  checkoutButton.disabled = true;
+  checkoutButton.textContent = "Opening Stripe...";
+
+  try {
+    const response = await fetch("/api/create-checkout-session", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        customer: {
+          name: formData.get("name"),
+          email: formData.get("email"),
+          address: formData.get("address")
+        },
+        items: activeItems.map((item) => ({
+          id: item.product.id,
+          name: item.product.name,
+          price: item.product.price,
+          size: item.product.size,
+          notes: item.product.notes,
+          description: item.product.description,
+          quantity: item.quantity
+        }))
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "Stripe checkout could not start.");
+    }
+
+    window.location.href = data.url;
+  } catch (error) {
+    showToast(error.message);
+    checkoutButton.disabled = false;
+    checkoutButton.textContent = "Pay with Stripe";
+  }
 });
 
 [searchInput, familyFilter, sortSelect].forEach((control) => {
