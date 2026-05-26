@@ -25,10 +25,21 @@ Add these environment variables in Vercel Project Settings:
 
 - `STRIPE_SECRET_KEY`: Stripe secret key. Use `sk_test_...` first, then switch to live when ready.
 - `SITE_URL`: Your production URL, such as `https://your-domain.com`.
-- `KV_REST_API_URL`: Upstash/Vercel KV REST URL.
-- `KV_REST_API_TOKEN`: Upstash/Vercel KV REST token.
+- `SUPABASE_URL`: Your Supabase project URL.
+- `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase service-role key. Keep this server-side only.
+- `SUPABASE_PRODUCTS_TABLE`: Optional. Defaults to `site_settings`.
 
-Vercel serverless functions cannot permanently save changes to files inside the deployment. The admin portal needs the KV variables above so product changes persist for customers.
+Create this table in Supabase SQL Editor:
+
+```sql
+create table if not exists public.site_settings (
+  key text primary key,
+  value jsonb not null,
+  updated_at timestamptz not null default now()
+);
+```
+
+Vercel serverless functions cannot permanently save changes to files inside the deployment. The admin portal needs Supabase environment variables above so product changes persist for customers. Upstash/Vercel KV is also supported as a fallback using `KV_REST_API_URL` and `KV_REST_API_TOKEN`.
 
 ## Product Data
 

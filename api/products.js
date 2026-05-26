@@ -41,6 +41,15 @@ module.exports = async function handler(request, response) {
 };
 
 async function readProducts() {
+  if (hasSupabaseConfig()) {
+    const products = await readSupabaseProducts();
+    if (products.length) return products;
+
+    const catalogProducts = readCatalogProducts();
+    await writeSupabaseProducts(catalogProducts);
+    return catalogProducts;
+  }
+
   if (hasKvConfig()) {
     const stored = await kvCommand(["GET", PRODUCT_KEY]);
     if (stored) {
@@ -61,11 +70,57 @@ async function readProducts() {
 }
 
 async function writeProducts(products) {
-  if (!hasKvConfig()) {
-    throw new Error("Product saving on Vercel requires KV_REST_API_URL and KV_REST_API_TOKEN environment variables.");
+  if (hasSupabaseConfig()) {
+    await writeSupabaseProducts(products);
+    return;
   }
 
-  await kvCommand(["SET", PRODUCT_KEY, JSON.stringify(products)]);
+  if (hasKvConfig()) {
+    await kvCommand(["SET", PRODUCT_KEY, JSON.stringify(products)]);
+    return;
+  }
+
+  throw new Error("Product saving on Vercel requires Supabase env vars or KV_REST_API_URL and KV_REST_API_TOKEN.");
+}
+
+async function readSupabaseProducts() {
+  const response = await fetch(`${getSupabaseRestUrl()}?key=eq.${encodeURIComponent(PRODUCT_KEY)}&select=value`, {
+    headers: getSupabaseHeaders()
+  });
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Supabase products could not load.");
+  }
+
+  const value = Array.isArray(data) && data[0] ? data[0].value : [];
+  return Array.isArray(value) ? value.map(normalizeProduct) : [];
+}
+
+async function writeSupabaseProducts(products) {
+  const response = await fetch(getSupabaseRestUrl(), {
+    method: "POST",
+    headers: {
+      ...getSupabaseHeaders(),
+      "Content-Type": "application/json",
+      Prefer: "resolution=merge-duplicates"
+    },
+    body: JSON.stringify({
+      key: PRODUCT_KEY,
+      value: products,
+      updated_at: new Date().toISOString()
+    })
+  });
+  const text = await response.text();
+
+  if (!response.ok) {
+    try {
+      const data = JSON.parse(text);
+      throw new Error(data.message || "Supabase products could not save.");
+    } catch (error) {
+      throw new Error(error.message || text || "Supabase products could not save.");
+    }
+  }
 }
 
 async function kvCommand(command) {
@@ -95,6 +150,34 @@ function readCatalogProducts() {
   } catch {
     return [];
   }
+}
+
+function hasSupabaseConfig() {
+  return Boolean(getSupabaseUrl() && getSupabaseKey());
+}
+
+function getSupabaseRestUrl() {
+  return `${getSupabaseUrl().replace(/\/$/, "")}/rest/v1/${encodeURIComponent(getSupabaseTable())}`;
+}
+
+function getSupabaseHeaders() {
+  const key = getSupabaseKey();
+  return {
+    apikey: key,
+    Authorization: `Bearer ${key}`
+  };
+}
+
+function getSupabaseUrl() {
+  return process.env.SUPABASE_URL || "";
+}
+
+function getSupabaseKey() {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+}
+
+function getSupabaseTable() {
+  return process.env.SUPABASE_PRODUCTS_TABLE || "site_settings";
 }
 
 function hasKvConfig() {
