@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin | Aura Society Co.</title>
+    <meta name="description" content="Manage Aura Society Co. fragrance products.">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">AS</span>
+        <span>Aura Society Co.</span>
+      </a>
+      <nav class="nav-actions" aria-label="Admin navigation">
+        <a href="index.html">Storefront</a>
+        <button id="exportButton" class="secondary-button" type="button">Export JSON</button>
+      </nav>
+    </header>
+
+    <main class="admin-shell">
+      <section class="admin-intro">
+        <p class="eyebrow">Product admin</p>
+        <h1>Manage Fragrances</h1>
+        <p>Add products, upload pictures, edit details, and control what appears in the customer marketplace.</p>
+      </section>
+
+      <section class="admin-layout">
+        <form id="productForm" class="admin-form">
+          <input type="hidden" id="productId">
+
+          <div class="form-grid">
+            <label>
+              Product name
+              <input id="productName" class="input" required placeholder="Midnight Ember">
+            </label>
+            <label>
+              Brand
+              <input id="productBrand" class="input" required placeholder="Aura Society Co.">
+            </label>
+            <label>
+              Price
+              <input id="productPrice" class="input" required type="number" min="0" step="0.01" placeholder="88.00">
+            </label>
+            <label>
+              Size
+              <input id="productSize" class="input" required placeholder="50 ml">
+            </label>
+            <label>
+              Scent family
+              <select id="productFamily" class="input" required>
+                <option value="Amber">Amber</option>
+                <option value="Citrus">Citrus</option>
+                <option value="Floral">Floral</option>
+                <option value="Fresh">Fresh</option>
+                <option value="Gourmand">Gourmand</option>
+                <option value="Woody">Woody</option>
+              </select>
+            </label>
+            <label>
+              Stock
+              <input id="productStock" class="input" required type="number" min="0" step="1" placeholder="12">
+            </label>
+          </div>
+
+          <label>
+            Notes
+            <input id="productNotes" class="input" required placeholder="Saffron, cedar, vanilla smoke">
+          </label>
+
+          <label>
+            Description
+            <textarea id="productDescription" class="input textarea" required placeholder="Describe the fragrance profile and mood."></textarea>
+          </label>
+
+          <label>
+            Product picture
+            <input id="productImage" class="input file-input" type="file" accept="image/*">
+          </label>
+
+          <div class="image-preview" id="imagePreview">
+            <span>No image selected</span>
+          </div>
+
+          <div class="form-actions">
+            <button class="primary-button" type="submit">Save product</button>
+            <button id="resetButton" class="secondary-button" type="button">Clear form</button>
+          </div>
+        </form>
+
+        <div class="admin-products">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Inventory</p>
+              <h2>Products</h2>
+            </div>
+            <button id="seedButton" class="secondary-button" type="button">Restore samples</button>
+          </div>
+          <div id="adminProductList" class="admin-list"></div>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="admin.js"></script>
+  </body>
+</html>

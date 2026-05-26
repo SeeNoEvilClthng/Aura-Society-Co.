@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Aura Society Co. | Fragrance Marketplace</title>
+    <meta name="description" content="Shop curated fragrances from Aura Society Co.">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Aura Society Co. home">
+        <span class="brand-mark">AS</span>
+        <span>Aura Society Co.</span>
+      </a>
+      <nav class="nav-actions" aria-label="Primary navigation">
+        <a href="#shop">Shop</a>
+        <a href="admin.html">Admin</a>
+        <button class="icon-button cart-toggle" type="button" aria-label="Open cart">
+          <span class="cart-icon" aria-hidden="true"></span>
+          <span id="cartCount" class="cart-count">0</span>
+        </button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="market-hero" aria-labelledby="heroTitle">
+        <div class="hero-copy">
+          <p class="eyebrow">Independent fragrance marketplace</p>
+          <h1 id="heroTitle">Aura Society Co.</h1>
+          <p>Discover polished signature scents, intimate oils, and limited blends curated for daily ritual and evening presence.</p>
+          <a class="primary-link" href="#shop">Shop fragrances</a>
+        </div>
+        <div class="hero-visual" aria-label="Featured Aura Society fragrance bottle">
+          <div class="bottle-scene">
+            <div class="bottle cap"></div>
+            <div class="bottle body">
+              <span>Aura</span>
+              <small>Society Co.</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="shop" class="shop-layout" aria-label="Fragrance shop">
+        <aside class="shop-tools">
+          <div>
+            <p class="eyebrow">Catalog</p>
+            <h2>Shop Scents</h2>
+          </div>
+          <label class="field-label" for="searchInput">Search</label>
+          <input id="searchInput" class="input" type="search" placeholder="Name, brand, notes">
+
+          <label class="field-label" for="familyFilter">Scent family</label>
+          <select id="familyFilter" class="input">
+            <option value="all">All families</option>
+          </select>
+
+          <label class="field-label" for="sortSelect">Sort</label>
+          <select id="sortSelect" class="input">
+            <option value="featured">Featured</option>
+            <option value="price-low">Price: low to high</option>
+            <option value="price-high">Price: high to low</option>
+            <option value="name">Name</option>
+          </select>
+        </aside>
+
+        <div>
+          <div class="shop-status">
+            <p id="productCount">0 fragrances</p>
+            <a href="admin.html">Manage products</a>
+          </div>
+          <div id="productGrid" class="product-grid" aria-live="polite"></div>
+        </div>
+      </section>
+    </main>
+
+    <aside id="cartDrawer" class="cart-drawer" aria-label="Shopping cart" aria-hidden="true">
+      <div class="cart-panel">
+        <div class="cart-head">
+          <h2>Your Cart</h2>
+          <button class="icon-button cart-close" type="button" aria-label="Close cart">x</button>
+        </div>
+        <div id="cartItems" class="cart-items"></div>
+        <div class="cart-empty" id="cartEmpty">Your cart is empty.</div>
+        <div class="cart-footer">
+          <div class="cart-total">
+            <span>Total</span>
+            <strong id="cartTotal">$0.00</strong>
+          </div>
+          <form id="checkoutForm" class="checkout-form">
+            <input class="input" name="name" placeholder="Full name" required>
+            <input class="input" name="email" type="email" placeholder="Email" required>
+            <input class="input" name="address" placeholder="Shipping address" required>
+            <button class="primary-button" type="submit">Place demo order</button>
+          </form>
+          <p class="microcopy">Demo checkout stores no payment details. Connect Stripe or Shopify later for live orders.</p>
+        </div>
+      </div>
+    </aside>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
