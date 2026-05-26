@@ -69,6 +69,14 @@ const mimeTypes = {
 
 const server = http.createServer(async (request, response) => {
   try {
+    applyCors(response);
+
+    if (request.method === "OPTIONS") {
+      response.writeHead(204);
+      response.end();
+      return;
+    }
+
     const requestUrl = new URL(request.url, SITE_URL);
 
     if (requestUrl.pathname === "/api/products") {
@@ -257,6 +265,12 @@ function readJson(request) {
 function sendJson(response, statusCode, data) {
   response.writeHead(statusCode, { "Content-Type": "application/json; charset=utf-8" });
   response.end(JSON.stringify(data));
+}
+
+function applyCors(response) {
+  response.setHeader("Access-Control-Allow-Origin", "*");
+  response.setHeader("Access-Control-Allow-Methods", "GET, HEAD, PUT, POST, OPTIONS");
+  response.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
 function ensureDataStore() {

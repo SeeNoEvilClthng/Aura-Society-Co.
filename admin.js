@@ -1,6 +1,7 @@
 const AUTH_KEY = "auraSocietyAdminAuth";
 const ADMIN_USERNAME = "XThaBoss2";
 const ADMIN_PASSWORD = "ZaraAleah12!";
+const API_BASE = getApiBase();
 
 const sampleProducts = [
   {
@@ -95,7 +96,7 @@ async function setAdminVisible(isVisible) {
 async function loadProducts() {
   try {
     productList.innerHTML = '<div class="empty-state">Loading products...</div>';
-    const data = await requestJson("/api/products");
+    const data = await requestJson(`${API_BASE}/api/products`);
     products = Array.isArray(data.products) ? data.products : [];
     renderCollectionOptions();
   } catch (error) {
@@ -111,7 +112,7 @@ function renderCollectionOptions() {
 }
 
 async function saveProducts() {
-  const data = await requestJson("/api/products", {
+  const data = await requestJson(`${API_BASE}/api/products`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json"
@@ -137,6 +138,15 @@ async function requestJson(url, options) {
   }
 
   return data;
+}
+
+function getApiBase() {
+  const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
+  if (localHosts.has(window.location.hostname) && window.location.port !== "4173") {
+    return "http://localhost:4173";
+  }
+
+  return "";
 }
 
 function slugify(value) {

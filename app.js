@@ -5,6 +5,7 @@ const currency = new Intl.NumberFormat("en-US", {
   currency: "USD"
 });
 
+const API_BASE = getApiBase();
 let products = [];
 let activeCollection = "all";
 let cart = loadCart();
@@ -49,7 +50,7 @@ async function loadProducts() {
 
 async function fetchProducts() {
   try {
-    const data = await requestJson("/api/products");
+    const data = await requestJson(`${API_BASE}/api/products`);
     return Array.isArray(data.products) ? data.products : [];
   } catch {
     const fallback = await requestJson("/catalog/products.json");
@@ -303,7 +304,7 @@ checkoutForm.addEventListener("submit", async (event) => {
   checkoutButton.textContent = "Opening Stripe...";
 
   try {
-    const response = await fetch("/api/create-checkout-session", {
+    const response = await fetch(`${API_BASE}/api/create-checkout-session`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -338,6 +339,15 @@ checkoutForm.addEventListener("submit", async (event) => {
     checkoutButton.textContent = "Pay with Stripe";
   }
 });
+
+function getApiBase() {
+  const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
+  if (localHosts.has(window.location.hostname) && window.location.port !== "4173") {
+    return "http://localhost:4173";
+  }
+
+  return "";
+}
 
 [searchInput, familyFilter, sortSelect].forEach((control) => {
   control.addEventListener("input", renderProducts);
