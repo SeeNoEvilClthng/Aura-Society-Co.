@@ -177,8 +177,12 @@ async function requestJson(url, options) {
 }
 
 function getApiBase() {
-  const localApiBase = "http://localhost:4173";
-  return window.location.origin === localApiBase ? "" : localApiBase;
+  const localHosts = new Set(["localhost", "127.0.0.1", "::1", ""]);
+  if (window.location.protocol === "file:" || (localHosts.has(window.location.hostname) && window.location.port !== "4173")) {
+    return "http://localhost:4173";
+  }
+
+  return "";
 }
 
 function slugify(value) {
