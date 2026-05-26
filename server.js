@@ -8,6 +8,47 @@ const PORT = Number(process.env.PORT || 4173);
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
 const SITE_URL = process.env.SITE_URL || `http://localhost:${PORT}`;
 const publicDir = __dirname;
+const dataDir = path.join(__dirname, "data");
+const productsPath = path.join(dataDir, "products.json");
+
+const sampleProducts = [
+  {
+    id: "aurora-veil",
+    name: "Aurora Veil",
+    brand: "Aura Society Co.",
+    price: 86,
+    size: "50 ml",
+    family: "Floral",
+    notes: "Pear blossom, jasmine silk, white musk",
+    description: "A clean floral with soft projection and a polished, airy finish.",
+    stock: 18,
+    image: ""
+  },
+  {
+    id: "midnight-ember",
+    name: "Midnight Ember",
+    brand: "Aura Society Co.",
+    price: 96,
+    size: "50 ml",
+    family: "Amber",
+    notes: "Saffron, cedar, vanilla smoke",
+    description: "Warm, resinous, and refined for evenings that linger.",
+    stock: 9,
+    image: ""
+  },
+  {
+    id: "citrus-accord",
+    name: "Citrus Accord",
+    brand: "Aura Society Co.",
+    price: 74,
+    size: "30 ml",
+    family: "Citrus",
+    notes: "Bergamot, neroli, mineral woods",
+    description: "Bright citrus with a dry woods base for everyday wear.",
+    stock: 24,
+    image: ""
+  }
+];
 
 const mimeTypes = {
   ".css": "text/css; charset=utf-8",
@@ -23,6 +64,13 @@ const mimeTypes = {
 
 const server = http.createServer(async (request, response) => {
   try {
+    const requestUrl = new URL(request.url, SITE_URL);
+
+    if (requestUrl.pathname === "/api/products") {
+      await handleProducts(request, response);
+      return;
+    }
+
     if (request.method === "POST" && request.url === "/api/create-checkout-session") {
       await createCheckoutSession(request, response);
       return;
@@ -41,8 +89,32 @@ const server = http.createServer(async (request, response) => {
 });
 
 server.listen(PORT, () => {
+  ensureDataStore();
   console.log(`Aura Society Co. running at ${SITE_URL}`);
 });
+
+async function handleProducts(request, response) {
+  if (request.method === "GET" || request.method === "HEAD") {
+    sendJson(response, 200, { products: readProducts() });
+    return;
+  }
+
+  if (request.method === "PUT") {
+    const payload = await readJson(request);
+    const products = Array.isArray(payload.products) ? payload.products : payload;
+
+    if (!Array.isArray(products)) {
+      sendJson(response, 400, { error: "Products must be an array." });
+      return;
+    }
+
+    writeProducts(products.map(normalizeProduct));
+    sendJson(response, 200, { products: readProducts() });
+    return;
+  }
+
+  sendJson(response, 405, { error: "Method not allowed." });
+}
 
 async function createCheckoutSession(request, response) {
   if (!STRIPE_SECRET_KEY) {
@@ -119,7 +191,7 @@ function serveStatic(request, response) {
   const cleanPath = decodeURIComponent(requestUrl.pathname === "/" ? "/index.html" : requestUrl.pathname);
   const filePath = path.normalize(path.join(publicDir, cleanPath));
 
-  if (!filePath.startsWith(publicDir)) {
+  if (!filePath.startsWith(publicDir) || isBlockedStaticPath(cleanPath)) {
     response.writeHead(403);
     response.end("Forbidden");
     return;
@@ -143,12 +215,25 @@ function serveStatic(request, response) {
   });
 }
 
+function isBlockedStaticPath(cleanPath) {
+  const normalized = cleanPath.replace(/\\/g, "/");
+  const blockedFiles = new Set([
+    "/.env",
+    "/.env.example",
+    "/.gitignore",
+    "/package.json",
+    "/server.js"
+  ]);
+
+  return normalized.includes("/.") || normalized.startsWith("/data/") || blockedFiles.has(normalized);
+}
+
 function readJson(request) {
   return new Promise((resolve, reject) => {
     let body = "";
     request.on("data", (chunk) => {
       body += chunk;
-      if (body.length > 1_000_000) {
+      if (body.length > 12_000_000) {
         request.destroy();
         reject(new Error("Request body too large."));
       }
@@ -167,6 +252,51 @@ function readJson(request) {
 function sendJson(response, statusCode, data) {
   response.writeHead(statusCode, { "Content-Type": "application/json; charset=utf-8" });
   response.end(JSON.stringify(data));
+}
+
+function ensureDataStore() {
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+
+  if (!fs.existsSync(productsPath)) {
+    writeProducts(sampleProducts);
+  }
+}
+
+function readProducts() {
+  ensureDataStore();
+
+  try {
+    const products = JSON.parse(fs.readFileSync(productsPath, "utf8"));
+    return Array.isArray(products) ? products.map(normalizeProduct) : sampleProducts;
+  } catch {
+    writeProducts(sampleProducts);
+    return sampleProducts;
+  }
+}
+
+function writeProducts(products) {
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+
+  fs.writeFileSync(productsPath, `${JSON.stringify(products, null, 2)}\n`);
+}
+
+function normalizeProduct(product) {
+  return {
+    id: sanitize(product.id, 120) || `product-${Date.now().toString(36)}`,
+    name: sanitize(product.name, 140),
+    brand: sanitize(product.brand, 140),
+    price: Number.isFinite(Number(product.price)) ? Number(product.price) : 0,
+    size: sanitize(product.size, 60),
+    family: sanitize(product.family, 80),
+    notes: sanitize(product.notes, 240),
+    description: sanitize(product.description, 600),
+    stock: clampInteger(product.stock, 0, 999999),
+    image: sanitize(product.image, 10_000_000)
+  };
 }
 
 function sanitize(value, maxLength) {

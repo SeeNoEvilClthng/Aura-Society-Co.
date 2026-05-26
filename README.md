@@ -19,6 +19,6 @@ The checkout flow creates a Stripe Checkout Session from the cart and redirects 
 
 ## Product Data
 
-Products are stored in the browser with `localStorage`, including uploaded images as data URLs. This makes the prototype work without a backend.
+Products are stored in `data/products.json` through the local Node server. The storefront and admin portal both use `/api/products`, so admin changes show up for every visitor using the same deployed server.
 
 For a production store, connect the admin portal to a database or commerce platform and calculate product prices server-side instead of trusting browser data.

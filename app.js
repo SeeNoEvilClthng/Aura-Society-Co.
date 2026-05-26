@@ -1,51 +1,11 @@
-const PRODUCTS_KEY = "auraSocietyProducts";
 const CART_KEY = "auraSocietyCart";
-
-const sampleProducts = [
-  {
-    id: "aurora-veil",
-    name: "Aurora Veil",
-    brand: "Aura Society Co.",
-    price: 86,
-    size: "50 ml",
-    family: "Floral",
-    notes: "Pear blossom, jasmine silk, white musk",
-    description: "A clean floral with soft projection and a polished, airy finish.",
-    stock: 18,
-    image: ""
-  },
-  {
-    id: "midnight-ember",
-    name: "Midnight Ember",
-    brand: "Aura Society Co.",
-    price: 96,
-    size: "50 ml",
-    family: "Amber",
-    notes: "Saffron, cedar, vanilla smoke",
-    description: "Warm, resinous, and refined for evenings that linger.",
-    stock: 9,
-    image: ""
-  },
-  {
-    id: "citrus-accord",
-    name: "Citrus Accord",
-    brand: "Aura Society Co.",
-    price: 74,
-    size: "30 ml",
-    family: "Citrus",
-    notes: "Bergamot, neroli, mineral woods",
-    description: "Bright citrus with a dry woods base for everyday wear.",
-    stock: 24,
-    image: ""
-  }
-];
 
 const currency = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD"
 });
 
-let products = loadProducts();
+let products = [];
 let cart = loadCart();
 
 const productGrid = document.querySelector("#productGrid");
@@ -62,26 +22,32 @@ const checkoutForm = document.querySelector("#checkoutForm");
 const checkoutButton = document.querySelector("#checkoutButton");
 const toast = document.querySelector("#toast");
 
-function loadProducts() {
-  const stored = localStorage.getItem(PRODUCTS_KEY);
-  if (!stored) {
-    localStorage.setItem(PRODUCTS_KEY, JSON.stringify(sampleProducts));
-    return sampleProducts;
-  }
-
-  try {
-    return JSON.parse(stored);
-  } catch {
-    localStorage.setItem(PRODUCTS_KEY, JSON.stringify(sampleProducts));
-    return sampleProducts;
-  }
-}
-
 function loadCart() {
   try {
     return JSON.parse(localStorage.getItem(CART_KEY)) || [];
   } catch {
     return [];
+  }
+}
+
+async function loadProducts() {
+  productGrid.innerHTML = '<div class="empty-state">Loading fragrances...</div>';
+
+  try {
+    const response = await fetch("/api/products");
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Products could not load.");
+    }
+
+    products = Array.isArray(data.products) ? data.products : [];
+    populateFamilies();
+    renderProducts();
+    renderCart();
+  } catch (error) {
+    productGrid.innerHTML = `<div class="empty-state">${error.message}</div>`;
+    showToast(error.message);
   }
 }
 
@@ -324,6 +290,5 @@ checkoutForm.addEventListener("submit", async (event) => {
   control.addEventListener("input", renderProducts);
 });
 
-populateFamilies();
-renderProducts();
+loadProducts();
 renderCart();

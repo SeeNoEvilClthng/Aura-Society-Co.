@@ -1,0 +1,38 @@
+[
+  {
+    "id": "aurora-veil",
+    "name": "Aurora Veil",
+    "brand": "Aura Society Co.",
+    "price": 86,
+    "size": "50 ml",
+    "family": "Floral",
+    "notes": "Pear blossom, jasmine silk, white musk",
+    "description": "A clean floral with soft projection and a polished, airy finish.",
+    "stock": 18,
+    "image": ""
+  },
+  {
+    "id": "midnight-ember",
+    "name": "Midnight Ember",
+    "brand": "Aura Society Co.",
+    "price": 96,
+    "size": "50 ml",
+    "family": "Amber",
+    "notes": "Saffron, cedar, vanilla smoke",
+    "description": "Warm, resinous, and refined for evenings that linger.",
+    "stock": 9,
+    "image": ""
+  },
+  {
+    "id": "citrus-accord",
+    "name": "Citrus Accord",
+    "brand": "Aura Society Co.",
+    "price": 74,
+    "size": "30 ml",
+    "family": "Citrus",
+    "notes": "Bergamot, neroli, mineral woods",
+    "description": "Bright citrus with a dry woods base for everyday wear.",
+    "stock": 24,
+    "image": ""
+  }
+]

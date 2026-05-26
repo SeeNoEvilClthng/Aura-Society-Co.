@@ -1,4 +1,3 @@
-const PRODUCTS_KEY = "auraSocietyProducts";
 const AUTH_KEY = "auraSocietyAdminAuth";
 const ADMIN_USERNAME = "XThaBoss2";
 const ADMIN_PASSWORD = "ZaraAleah12!";
@@ -42,7 +41,7 @@ const sampleProducts = [
   }
 ];
 
-let products = loadProducts();
+let products = [];
 let selectedImage = "";
 
 const loginShell = document.querySelector("#loginShell");
@@ -74,36 +73,53 @@ function isAuthenticated() {
   return localStorage.getItem(AUTH_KEY) === "true";
 }
 
-function setAdminVisible(isVisible) {
+async function setAdminVisible(isVisible) {
   loginShell.classList.toggle("hidden", isVisible);
   adminShell.classList.toggle("hidden", !isVisible);
   logoutButton.classList.toggle("hidden", !isVisible);
   exportButton.classList.toggle("hidden", !isVisible);
 
   if (isVisible) {
+    await loadProducts();
     renderProducts();
   } else {
     window.setTimeout(() => adminUsername.focus(), 0);
   }
 }
 
-function loadProducts() {
-  const stored = localStorage.getItem(PRODUCTS_KEY);
-  if (!stored) {
-    localStorage.setItem(PRODUCTS_KEY, JSON.stringify(sampleProducts));
-    return sampleProducts;
-  }
-
+async function loadProducts() {
   try {
-    return JSON.parse(stored);
-  } catch {
-    localStorage.setItem(PRODUCTS_KEY, JSON.stringify(sampleProducts));
-    return sampleProducts;
+    productList.innerHTML = '<div class="empty-state">Loading products...</div>';
+    const response = await fetch("/api/products");
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Products could not load.");
+    }
+
+    products = Array.isArray(data.products) ? data.products : [];
+  } catch (error) {
+    products = [];
+    productList.innerHTML = `<div class="empty-state">${error.message}</div>`;
+    showToast(error.message);
   }
 }
 
-function saveProducts() {
-  localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
+async function saveProducts() {
+  const response = await fetch("/api/products", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ products })
+  });
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Products could not save.");
+  }
+
+  products = Array.isArray(data.products) ? data.products : products;
 }
 
 function slugify(value) {
@@ -223,7 +239,7 @@ productImage.addEventListener("change", () => {
   reader.readAsDataURL(file);
 });
 
-form.addEventListener("submit", (event) => {
+form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const id = productId.value || `${slugify(productName.value)}-${Date.now().toString(36)}`;
@@ -241,20 +257,24 @@ form.addEventListener("submit", (event) => {
     image: selectedImage
   };
 
-  if (existing) {
-    products = products.map((entry) => entry.id === id ? product : entry);
-    showToast("Product updated.");
-  } else {
-    products = [product, ...products];
-    showToast("Product added.");
-  }
+  try {
+    if (existing) {
+      products = products.map((entry) => entry.id === id ? product : entry);
+      showToast("Product updated.");
+    } else {
+      products = [product, ...products];
+      showToast("Product added.");
+    }
 
-  saveProducts();
-  renderProducts();
-  clearForm();
+    await saveProducts();
+    renderProducts();
+    clearForm();
+  } catch (error) {
+    showToast(error.message);
+  }
 });
 
-productList.addEventListener("click", (event) => {
+productList.addEventListener("click", async (event) => {
   const edit = event.target.closest("[data-edit]");
   const remove = event.target.closest("[data-delete]");
 
@@ -268,21 +288,29 @@ productList.addEventListener("click", (event) => {
     if (!product) return;
     const confirmed = window.confirm(`Delete ${product.name}?`);
     if (!confirmed) return;
-    products = products.filter((entry) => entry.id !== product.id);
-    saveProducts();
-    renderProducts();
-    showToast("Product deleted.");
+    try {
+      products = products.filter((entry) => entry.id !== product.id);
+      await saveProducts();
+      renderProducts();
+      showToast("Product deleted.");
+    } catch (error) {
+      showToast(error.message);
+    }
   }
 });
 
 resetButton.addEventListener("click", clearForm);
 
-seedButton.addEventListener("click", () => {
-  products = sampleProducts;
-  saveProducts();
-  clearForm();
-  renderProducts();
-  showToast("Sample products restored.");
+seedButton.addEventListener("click", async () => {
+  try {
+    products = sampleProducts;
+    await saveProducts();
+    clearForm();
+    renderProducts();
+    showToast("Sample products restored.");
+  } catch (error) {
+    showToast(error.message);
+  }
 });
 
 exportButton.addEventListener("click", () => {
