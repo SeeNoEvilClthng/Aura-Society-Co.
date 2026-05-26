@@ -4,7 +4,9 @@ Online fragrance marketplace prototype with a customer storefront, Stripe Checko
 
 ## Pages
 
-- `index.html` is the storefront with editable homepage sections, product filtering, cart, and demo checkout.
+- `index.html` is the storefront with editable homepage sections, product previews, cart drawer, and links into the shopping pages.
+- `collections.html`, `collection.html`, and `product.html` provide dedicated collection and product pages for the customer shopping flow.
+- `checkout.html` is a Shopify-style checkout information page that summarizes the cart before redirecting to Stripe payment.
 - `admin.html` is the admin portal for editing homepage content, collection cards, adding products, editing products, deleting products, uploading pictures, and exporting store data.
 - `success.html` is the Stripe Checkout return page.
 

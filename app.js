@@ -159,7 +159,7 @@ function renderSite() {
 
 function renderNav() {
   const links = splitList(site.navLinks);
-  primaryNav.innerHTML = links.map((label) => `<a href="#shop">${escapeHtml(label)}</a>`).join("");
+  primaryNav.innerHTML = links.map((label) => `<a href="${escapeAttribute(navHref(label))}">${escapeHtml(label)}</a>`).join("");
 }
 
 function renderHeroPanels() {
@@ -180,10 +180,10 @@ function renderFeaturedTiles() {
   featuredTiles.innerHTML = links.map((label, index) => {
     const product = products.find((entry) => entry.collection === label) || products[index];
     return `
-      <button class="feature-tile" type="button" data-jump="${escapeHtml(label)}">
+      <a class="feature-tile" href="${escapeAttribute(collectionHref(label))}">
         ${productImage(product, "tile")}
         <span>${escapeHtml(label)}</span>
-      </button>
+      </a>
     `;
   }).join("");
 }
@@ -192,14 +192,14 @@ function renderPromoGrid() {
   promoGrid.innerHTML = site.promoCards.slice(0, 4).map((card, index) => {
     const product = products.find((entry) => entry.collection === card.title) || products[index];
     return `
-      <article class="promo-card" data-jump="${escapeHtml(card.title)}">
+      <a class="promo-card" href="${escapeAttribute(collectionHref(card.title))}">
         <div class="promo-media">${card.image ? `<img src="${escapeAttribute(card.image)}" alt="${escapeAttribute(card.title)}">` : productImage(product, "tile")}</div>
         <div class="promo-copy">
           <span>${escapeHtml(card.label)}</span>
           <h3>${escapeHtml(card.title)}</h3>
-          <button class="primary-button" type="button" data-jump="${escapeHtml(card.title)}">${escapeHtml(card.button)}</button>
+          <strong class="primary-button">${escapeHtml(card.button)}</strong>
         </div>
-      </article>
+      </a>
     `;
   }).join("");
 }
@@ -209,10 +209,10 @@ function renderFamilyTiles() {
   familyTiles.innerHTML = families.map((family, index) => {
     const product = products.find((entry) => entry.family === family) || products[index];
     return `
-      <button class="family-tile" type="button" data-family="${escapeHtml(family)}">
+      <a class="family-tile" href="collections.html?family=${encodeURIComponent(family)}">
         ${productImage(product, "tile")}
         <strong>${escapeHtml(family)}</strong>
-      </button>
+      </a>
     `;
   }).join("");
 }
@@ -232,10 +232,10 @@ function renderCollectionTabs() {
       : products.filter((product) => product.collection === collection).length;
 
     return `
-      <button class="collection-tab ${isActive ? "is-active" : ""}" type="button" data-collection="${escapeHtml(collection)}" aria-pressed="${isActive}">
+      <a class="collection-tab ${isActive ? "is-active" : ""}" href="${escapeAttribute(collection === "all" ? "collections.html" : collectionHref(collection))}" aria-pressed="${isActive}">
         <span>${escapeHtml(label)}</span>
         <small>${count}</small>
-      </button>
+      </a>
     `;
   }).join("");
 }
@@ -296,13 +296,13 @@ function renderProducts() {
 
   productGrid.innerHTML = visibleProducts.map((product) => `
     <article class="product-card retail-product-card">
-      <div class="product-image">${productImage(product)}</div>
+      <a class="product-image" href="product.html?id=${encodeURIComponent(product.id)}">${productImage(product)}</a>
       <div class="product-info">
         <div class="product-meta">
           <span>${escapeHtml(product.brand)}</span>
           <span>Star 5.0</span>
         </div>
-        <h3>${escapeHtml(product.name)}</h3>
+        <h3><a href="product.html?id=${encodeURIComponent(product.id)}">${escapeHtml(product.name)}</a></h3>
         <p class="notes">${escapeHtml(product.notes)}</p>
         <div class="product-meta">
           <span>${escapeHtml(product.size)}</span>
@@ -385,15 +385,7 @@ function updateQuantity(productId, change) {
 }
 
 function jumpToCollection(label) {
-  const collectionMatch = products.some((product) => product.collection === label);
-  const familyMatch = products.some((product) => product.family === label);
-
-  if (collectionMatch) activeCollection = label;
-  if (familyMatch) familyFilter.value = label;
-
-  renderCollectionTabs();
-  renderProducts();
-  document.querySelector("#shop").scrollIntoView({ behavior: "smooth" });
+  window.location.href = collectionHref(label);
 }
 
 function openCart() {
@@ -417,6 +409,20 @@ function splitList(value) {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function navHref(label) {
+  const normalized = String(label || "").toLowerCase();
+  if (normalized.includes("collection") || normalized.includes("new") || normalized.includes("seller") || normalized.includes("oil")) {
+    return "collections.html";
+  }
+  if (normalized.includes("help")) return "mailto:support@aurasocietyco.com";
+  if (normalized.includes("gift")) return "collections.html";
+  return "collections.html";
+}
+
+function collectionHref(label) {
+  return `collection.html?collection=${encodeURIComponent(label)}`;
 }
 
 function escapeHtml(value) {
@@ -449,23 +455,6 @@ collectionTabs.addEventListener("click", (event) => {
   renderProducts();
 });
 
-[featuredTiles, promoGrid].forEach((element) => {
-  element.addEventListener("click", (event) => {
-    const target = event.target.closest("[data-jump]");
-    if (target) jumpToCollection(target.dataset.jump);
-  });
-});
-
-familyTiles.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-family]");
-  if (!button) return;
-  familyFilter.value = button.dataset.family;
-  activeCollection = "all";
-  renderCollectionTabs();
-  renderProducts();
-  document.querySelector("#shop").scrollIntoView({ behavior: "smooth" });
-});
-
 cartItems.addEventListener("click", (event) => {
   const increase = event.target.closest("[data-increase]");
   const decrease = event.target.closest("[data-decrease]");
@@ -482,55 +471,12 @@ cartDrawer.addEventListener("click", (event) => {
 
 checkoutForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-
-  const activeItems = cart
-    .map((item) => ({ ...item, product: products.find((product) => product.id === item.id) }))
-    .filter((item) => item.product);
-
-  if (!activeItems.length) {
+  if (!cart.length) {
     showToast("Your bag is empty.");
     return;
   }
 
-  const formData = new FormData(checkoutForm);
-  checkoutButton.disabled = true;
-  checkoutButton.textContent = "Opening Stripe...";
-
-  try {
-    const response = await fetch(`${API_BASE}/api/create-checkout-session`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        customer: {
-          name: formData.get("name"),
-          email: formData.get("email"),
-          address: formData.get("address")
-        },
-        items: activeItems.map((item) => ({
-          id: item.product.id,
-          name: item.product.name,
-          price: item.product.price,
-          size: item.product.size,
-          notes: item.product.notes,
-          description: item.product.description,
-          quantity: item.quantity
-        }))
-      })
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || "Stripe checkout could not start.");
-    }
-
-    window.location.href = data.url;
-  } catch (error) {
-    showToast(error.message);
-    checkoutButton.disabled = false;
-    checkoutButton.textContent = "Continue to secure checkout";
-  }
+  window.location.href = "checkout.html";
 });
 
 function getApiBase() {

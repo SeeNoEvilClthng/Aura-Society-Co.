@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Collections | Aura Society Co.</title>
+    <meta name="description" content="Shop Aura Society Co. fragrance collections.">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body data-page="collections">
+    <div id="topBanner" class="top-banner">Free standard shipping on fragrance orders $100+ USD</div>
+    <header class="site-header retail-header">
+      <a class="brand" href="index.html" aria-label="Aura Society Co. home">
+        <img class="brand-logo" src="assets/branding/aura-society-logo.png" alt="Aura Society Co.">
+      </a>
+      <nav class="nav-actions retail-nav" aria-label="Primary navigation">
+        <a href="collections.html">New Arrivals</a>
+        <a href="collections.html">Best Sellers</a>
+        <a href="collections.html">Collections</a>
+        <a href="admin.html">Admin</a>
+      </nav>
+      <a class="header-checkout" href="checkout.html">Bag <span id="cartCount">0</span></a>
+    </header>
+
+    <main>
+      <section class="page-hero">
+        <p class="hero-kicker">Shop by mood</p>
+        <h1>Collections</h1>
+        <p>Browse every Aura Society Co. fragrance collection, then open a collection page to shop its scents.</p>
+      </section>
+      <section class="retail-section">
+        <div id="collectionGrid" class="promo-grid"></div>
+      </section>
+      <section class="retail-section product-section">
+        <div class="retail-section-head">
+          <h2>All Fragrances</h2>
+          <select id="familyFilter" class="control-input" aria-label="Filter by scent family">
+            <option value="all">All families</option>
+          </select>
+        </div>
+        <div id="productGrid" class="product-grid retail-product-grid"></div>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="pages.js?v=page-routes-20260526"></script>
+  </body>
+</html>

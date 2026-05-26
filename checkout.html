@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Checkout | Aura Society Co.</title>
+    <meta name="description" content="Aura Society Co. checkout page.">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body data-page="checkout" class="checkout-page">
+    <main class="checkout-shell">
+      <section class="checkout-main">
+        <a class="checkout-brand" href="index.html">
+          <img src="assets/branding/aura-society-logo.png" alt="Aura Society Co.">
+        </a>
+        <nav class="checkout-crumbs" aria-label="Checkout steps">
+          <a href="index.html">Cart</a>
+          <span>Information</span>
+          <span>Shipping</span>
+          <span>Payment</span>
+        </nav>
+
+        <div class="express-box">
+          <p>Express checkout</p>
+          <div class="express-buttons">
+            <button class="shop-pay" type="button">Shop Pay</button>
+            <button class="paypal-pay" type="button">PayPal</button>
+            <button class="google-pay" type="button">G Pay</button>
+          </div>
+        </div>
+
+        <div class="checkout-divider"><span>OR</span></div>
+
+        <form id="checkoutForm" class="shopify-checkout-form">
+          <div class="checkout-section-head">
+            <h1>Contact information</h1>
+            <a href="admin.html">Admin login</a>
+          </div>
+          <input class="checkout-input" name="email" type="email" placeholder="Email" required>
+          <label class="checkout-checkbox">
+            <input type="checkbox" name="marketing">
+            Email me with news and offers
+          </label>
+
+          <h2>Shipping address</h2>
+          <div class="checkout-two">
+            <input class="checkout-input" name="firstName" placeholder="First name" required>
+            <input class="checkout-input" name="lastName" placeholder="Last name" required>
+          </div>
+          <input class="checkout-input" name="company" placeholder="Company (optional)">
+          <input class="checkout-input" name="address" placeholder="Address" required>
+          <input class="checkout-input" name="apartment" placeholder="Apartment, suite, etc. (optional)">
+          <div class="checkout-three">
+            <select class="checkout-input" name="country" required>
+              <option value="United States">United States</option>
+            </select>
+            <input class="checkout-input" name="state" placeholder="State" required>
+            <input class="checkout-input" name="zip" placeholder="ZIP code" required>
+          </div>
+          <input class="checkout-input" name="phone" type="tel" placeholder="Phone">
+
+          <div class="checkout-actions">
+            <a href="index.html">Return to cart</a>
+            <button id="checkoutButton" class="checkout-continue" type="submit">Continue to payment</button>
+          </div>
+        </form>
+      </section>
+
+      <aside class="checkout-summary">
+        <div id="checkoutItems" class="checkout-items"></div>
+        <div class="discount-row">
+          <input class="checkout-input" placeholder="Gift card or discount code">
+          <button type="button">Apply</button>
+        </div>
+        <div class="summary-lines">
+          <p><span>Subtotal</span><strong id="checkoutSubtotal">$0.00</strong></p>
+          <p><span>Shipping</span><small>Calculated at next step</small></p>
+          <p class="summary-total"><span>Total</span><strong id="checkoutTotal">$0.00</strong></p>
+        </div>
+      </aside>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="pages.js?v=page-routes-20260526"></script>
+  </body>
+</html>
