@@ -77,6 +77,10 @@ async function requestJson(url, options) {
 
 function renderCollectionTabs() {
   const collections = [...new Set(products.map((product) => product.collection).filter(Boolean))].sort();
+  if (activeCollection !== "all" && !collections.includes(activeCollection)) {
+    activeCollection = "all";
+  }
+
   const tabs = ["all", ...collections];
 
   collectionTabs.innerHTML = tabs.map((collection) => {

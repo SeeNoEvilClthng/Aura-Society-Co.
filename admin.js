@@ -2,6 +2,8 @@ const AUTH_KEY = "auraSocietyAdminAuth";
 const ADMIN_USERNAME = "XThaBoss2";
 const ADMIN_PASSWORD = "ZaraAleah12!";
 const API_BASE = getApiBase();
+const LEGACY_PRODUCTS_KEY = "auraSocietyProducts";
+const LEGACY_MIGRATION_KEY = "auraSocietyProductsMigrated";
 
 const sampleProducts = [
   {
@@ -70,6 +72,7 @@ const productDescription = document.querySelector("#productDescription");
 const productImage = document.querySelector("#productImage");
 const imagePreview = document.querySelector("#imagePreview");
 const productList = document.querySelector("#adminProductList");
+const saveProductButton = document.querySelector("#saveProductButton");
 const resetButton = document.querySelector("#resetButton");
 const seedButton = document.querySelector("#seedButton");
 const exportButton = document.querySelector("#exportButton");
@@ -87,7 +90,8 @@ async function setAdminVisible(isVisible) {
 
   if (isVisible) {
     await loadProducts();
-    renderProducts();
+    await migrateLegacyProducts();
+    refreshProductsUI();
   } else {
     window.setTimeout(() => adminUsername.focus(), 0);
   }
@@ -98,7 +102,6 @@ async function loadProducts() {
     productList.innerHTML = '<div class="empty-state">Loading products...</div>';
     const data = await requestJson(`${API_BASE}/api/products`);
     products = Array.isArray(data.products) ? data.products : [];
-    renderCollectionOptions();
   } catch (error) {
     products = [];
     productList.innerHTML = `<div class="empty-state">${error.message}</div>`;
@@ -106,9 +109,42 @@ async function loadProducts() {
   }
 }
 
+async function migrateLegacyProducts() {
+  if (localStorage.getItem(LEGACY_MIGRATION_KEY) === "true") return;
+
+  let legacyProducts = [];
+  try {
+    legacyProducts = JSON.parse(localStorage.getItem(LEGACY_PRODUCTS_KEY)) || [];
+  } catch {
+    legacyProducts = [];
+  }
+
+  if (!Array.isArray(legacyProducts) || !legacyProducts.length) {
+    localStorage.setItem(LEGACY_MIGRATION_KEY, "true");
+    return;
+  }
+
+  const existingIds = new Set(products.map((product) => product.id));
+  const additions = legacyProducts.filter((product) => product && product.id && !existingIds.has(product.id));
+
+  if (additions.length) {
+    products = [...additions, ...products];
+    await saveProducts();
+    await loadProducts();
+    showToast("Recovered previously saved browser products.");
+  }
+
+  localStorage.setItem(LEGACY_MIGRATION_KEY, "true");
+}
+
 function renderCollectionOptions() {
   const collections = [...new Set(products.map((product) => product.collection).filter(Boolean))].sort();
   collectionOptions.innerHTML = collections.map((collection) => `<option value="${collection}"></option>`).join("");
+}
+
+function refreshProductsUI() {
+  renderCollectionOptions();
+  renderProducts();
 }
 
 async function saveProducts() {
@@ -265,6 +301,8 @@ productImage.addEventListener("change", () => {
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
+  saveProductButton.disabled = true;
+  saveProductButton.textContent = "Saving...";
 
   const id = productId.value || `${slugify(productName.value)}-${Date.now().toString(36)}`;
   const existing = products.find((product) => product.id === id);
@@ -285,18 +323,20 @@ form.addEventListener("submit", async (event) => {
   try {
     if (existing) {
       products = products.map((entry) => entry.id === id ? product : entry);
-      showToast("Product updated.");
     } else {
       products = [product, ...products];
-      showToast("Product added.");
     }
 
     await saveProducts();
-    renderCollectionOptions();
-    renderProducts();
+    await loadProducts();
     clearForm();
+    refreshProductsUI();
+    showToast(existing ? "Product updated." : "Product added.");
   } catch (error) {
     showToast(error.message);
+  } finally {
+    saveProductButton.disabled = false;
+    saveProductButton.textContent = "Save product";
   }
 });
 
@@ -317,8 +357,8 @@ productList.addEventListener("click", async (event) => {
     try {
       products = products.filter((entry) => entry.id !== product.id);
       await saveProducts();
-      renderCollectionOptions();
-      renderProducts();
+      await loadProducts();
+      refreshProductsUI();
       showToast("Product deleted.");
     } catch (error) {
       showToast(error.message);
@@ -332,9 +372,9 @@ seedButton.addEventListener("click", async () => {
   try {
     products = sampleProducts;
     await saveProducts();
+    await loadProducts();
     clearForm();
-    renderCollectionOptions();
-    renderProducts();
+    refreshProductsUI();
     showToast("Sample products restored.");
   } catch (error) {
     showToast(error.message);
