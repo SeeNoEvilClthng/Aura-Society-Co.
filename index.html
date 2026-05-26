@@ -8,82 +8,149 @@
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
-    <header class="site-header">
+    <div id="topBanner" class="top-banner">Free standard shipping on fragrance orders $100+ USD</div>
+
+    <header class="site-header retail-header">
       <a class="brand" href="index.html" aria-label="Aura Society Co. home">
         <img class="brand-logo" src="assets/branding/aura-society-logo.png" alt="Aura Society Co.">
       </a>
-      <nav class="nav-actions" aria-label="Primary navigation">
-        <a href="#shop">Shop</a>
-        <a href="admin.html">Admin</a>
+      <nav id="primaryNav" class="nav-actions retail-nav" aria-label="Primary navigation"></nav>
+      <div class="header-tools">
+        <label class="header-search" for="searchInput">
+          <span aria-hidden="true">Search</span>
+          <input id="searchInput" type="search" placeholder="Search fragrances">
+        </label>
+        <a class="account-link" href="admin.html" aria-label="Admin portal">Admin</a>
         <button class="icon-button cart-toggle" type="button" aria-label="Open cart">
           <span class="cart-icon" aria-hidden="true"></span>
           <span id="cartCount" class="cart-count">0</span>
         </button>
-      </nav>
+      </div>
     </header>
 
     <main>
-      <section class="market-hero" aria-labelledby="heroTitle">
-        <div class="hero-copy">
-          <p class="eyebrow">Independent fragrance marketplace</p>
-          <img class="hero-logo" src="assets/branding/aura-society-logo.png" alt="Aura Society Co.">
-          <h1 id="heroTitle">Elevate Your Senses</h1>
-          <p>Discover polished signature scents, intimate oils, and limited blends curated for daily ritual and evening presence.</p>
-          <a class="primary-link" href="#shop">Shop fragrances</a>
-        </div>
-        <div class="hero-visual" aria-label="Featured Aura Society fragrance bottle">
-          <div class="bottle-scene">
-            <div class="bottle cap"></div>
-            <div class="bottle body">
-              <span>Aura</span>
-              <small>Society Co.</small>
-            </div>
-          </div>
+      <section class="drop-hero" aria-labelledby="heroTitle">
+        <div id="heroPanels" class="hero-panels" aria-hidden="true"></div>
+        <div class="hero-overlay">
+          <img class="hero-mark" src="assets/branding/aura-society-logo.png" alt="Aura Society Co.">
+          <p id="heroKicker" class="hero-kicker">New fragrance drop</p>
+          <h1 id="heroTitle">Aura Society Co. Signature Scents</h1>
+          <p id="heroSubtitle">A bold fragrance marketplace for elevated oils, extrait sprays, and daily signature scents.</p>
+          <a id="heroButton" class="hero-button" href="#shop">Shop the collection</a>
         </div>
       </section>
 
-      <section id="shop" class="shop-layout" aria-label="Fragrance shop">
-        <aside class="shop-tools">
+      <section class="retail-section" aria-labelledby="featuredTitle">
+        <div class="retail-section-head">
+          <h2 id="featuredTitle">Featured</h2>
+          <a href="#shop">Shop all</a>
+        </div>
+        <div id="featuredTiles" class="featured-tiles"></div>
+      </section>
+
+      <section class="retail-section" aria-labelledby="collectionsTitle">
+        <div class="retail-section-head">
+          <h2 id="collectionsTitle">Collections</h2>
+          <a href="#shop">Shop all</a>
+        </div>
+        <div id="promoGrid" class="promo-grid"></div>
+      </section>
+
+      <section id="shop" class="retail-section product-section" aria-label="Fragrance shop">
+        <div class="retail-section-head">
           <div>
-            <p class="eyebrow">Catalog</p>
-            <h2>Shop Scents</h2>
+            <h2 id="trendingTitle">Trending</h2>
+            <p id="productCount" class="section-count">0 fragrances</p>
           </div>
-          <label class="field-label" for="searchInput">Search</label>
-          <input id="searchInput" class="input" type="search" placeholder="Name, brand, notes">
-
-          <label class="field-label" for="familyFilter">Scent family</label>
-          <select id="familyFilter" class="input">
-            <option value="all">All families</option>
-          </select>
-
-          <label class="field-label" for="sortSelect">Sort</label>
-          <select id="sortSelect" class="input">
-            <option value="featured">Featured</option>
-            <option value="price-low">Price: low to high</option>
-            <option value="price-high">Price: high to low</option>
-            <option value="name">Name</option>
-          </select>
-        </aside>
-
-        <div>
-          <div class="shop-status">
-            <p id="productCount">0 fragrances</p>
-            <a href="admin.html">Manage products</a>
+          <div class="shop-controls">
+            <select id="familyFilter" class="control-input" aria-label="Filter by scent family">
+              <option value="all">All families</option>
+            </select>
+            <select id="sortSelect" class="control-input" aria-label="Sort products">
+              <option value="featured">Featured</option>
+              <option value="price-low">Price: low to high</option>
+              <option value="price-high">Price: high to low</option>
+              <option value="name">Name</option>
+            </select>
           </div>
-          <div id="collectionTabs" class="collection-tabs" aria-label="Shop by collection"></div>
-          <div id="productGrid" class="product-grid" aria-live="polite"></div>
         </div>
+        <div id="collectionTabs" class="collection-tabs" aria-label="Shop by collection"></div>
+        <div id="productGrid" class="product-grid retail-product-grid" aria-live="polite"></div>
       </section>
+
+      <section class="brand-band" aria-labelledby="brandsTitle">
+        <div class="retail-section-head">
+          <h2 id="brandsTitle">Scent Families</h2>
+          <a href="#shop">Shop all</a>
+        </div>
+        <div id="familyTiles" class="family-tiles"></div>
+      </section>
+
+      <section class="support-band" aria-labelledby="helpTitle">
+        <article>
+          <span aria-hidden="true">?</span>
+          <h2 id="helpTitle">Need help</h2>
+          <p>Find quick answers about orders, shipping, and fragrance recommendations.</p>
+          <a href="mailto:support@aurasocietyco.com">Email us</a>
+        </article>
+        <article>
+          <span aria-hidden="true">+</span>
+          <h2>Text us</h2>
+          <p>Send us a message and we will get back to you as soon as possible.</p>
+          <a href="sms:+10000000000">Text us</a>
+        </article>
+        <article>
+          <span aria-hidden="true">[]</span>
+          <h2>Live chat</h2>
+          <p>Chat with a real person for scent matching and checkout support.</p>
+          <a href="mailto:support@aurasocietyco.com">Chat now</a>
+        </article>
+      </section>
+
+      <footer class="vip-footer">
+        <div>
+          <h2 id="vipTitle">Become a VIP</h2>
+          <p id="vipText">Subscribe to get early access to drops, exclusive offers, and fragrance restocks.</p>
+          <form class="vip-form">
+            <input class="input" type="email" placeholder="Email address" aria-label="Email address">
+            <input class="input" type="tel" placeholder="Phone optional" aria-label="Phone optional">
+            <button class="primary-button" type="button">Sign up</button>
+          </form>
+        </div>
+        <div class="footer-links">
+          <div>
+            <h3>Shop</h3>
+            <a href="#shop">New Arrivals</a>
+            <a href="#shop">Best Sellers</a>
+            <a href="#shop">Collections</a>
+            <a href="#shop">Gift Cards</a>
+          </div>
+          <div>
+            <h3>Help</h3>
+            <a href="mailto:support@aurasocietyco.com">Returns</a>
+            <a href="mailto:support@aurasocietyco.com">Shipping</a>
+            <a href="mailto:support@aurasocietyco.com">FAQs</a>
+            <a href="mailto:support@aurasocietyco.com">Contact us</a>
+          </div>
+          <div>
+            <h3>Social</h3>
+            <a href="#">Instagram</a>
+            <a href="#">TikTok</a>
+            <a href="#">Facebook</a>
+            <a href="#">YouTube</a>
+          </div>
+        </div>
+      </footer>
     </main>
 
     <aside id="cartDrawer" class="cart-drawer" aria-label="Shopping cart" aria-hidden="true">
       <div class="cart-panel">
         <div class="cart-head">
-          <h2>Your Cart</h2>
+          <h2>Your Bag</h2>
           <button class="icon-button cart-close" type="button" aria-label="Close cart">x</button>
         </div>
         <div id="cartItems" class="cart-items"></div>
-        <div class="cart-empty" id="cartEmpty">Your cart is empty.</div>
+        <div class="cart-empty" id="cartEmpty">Your bag is empty.</div>
         <div class="cart-footer">
           <div class="cart-total">
             <span>Total</span>
@@ -110,6 +177,6 @@
     </aside>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script src="app.js?v=inventory-sync-20260525"></script>
+    <script src="app.js?v=retail-layout-20260526"></script>
   </body>
 </html>

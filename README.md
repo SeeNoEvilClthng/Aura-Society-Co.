@@ -4,8 +4,8 @@ Online fragrance marketplace prototype with a customer storefront, Stripe Checko
 
 ## Pages
 
-- `index.html` is the storefront with product filtering, cart, and demo checkout.
-- `admin.html` is the product admin portal for adding, editing, deleting, and exporting products.
+- `index.html` is the storefront with editable homepage sections, product filtering, cart, and demo checkout.
+- `admin.html` is the admin portal for editing homepage content, collection cards, adding products, editing products, deleting products, uploading pictures, and exporting store data.
 - `success.html` is the Stripe Checkout return page.
 
 ## Stripe Setup
@@ -45,6 +45,6 @@ Vercel serverless functions cannot permanently save changes to files inside the 
 
 ## Product Data
 
-Products are stored in `data/products.json` through the local Node server. The storefront and admin portal both use `/api/products`, so admin changes show up for every visitor using the same deployed server.
+Products are stored in `data/products.json` through the local Node server. Homepage content is stored in `data/site.json`. The storefront and admin portal use `/api/products` and `/api/site`, so admin changes show up for every visitor using the same deployed server.
 
 For a production store, connect the admin portal to a database or commerce platform and calculate product prices server-side instead of trusting browser data.

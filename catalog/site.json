@@ -1,0 +1,42 @@
+{
+  "topBanner": "Free standard shipping on fragrance orders $100+ USD",
+  "navLinks": "New Arrivals, Best Sellers, Collections, Fragrance Oils, Gift Cards, Help",
+  "heroKicker": "New fragrance drop",
+  "heroTitle": "Aura Society Co. Signature Scents",
+  "heroSubtitle": "A bold fragrance marketplace for elevated oils, extrait sprays, and daily signature scents.",
+  "heroButton": "Shop the collection",
+  "featuredTitle": "Featured",
+  "featuredLinks": "Signature Collection, Evening Reserve, Daily Rituals, Fragrance Oils",
+  "collectionsTitle": "Collections",
+  "trendingTitle": "Trending",
+  "brandsTitle": "Scent Families",
+  "helpTitle": "Need help",
+  "vipTitle": "Become a VIP",
+  "vipText": "Subscribe to get early access to drops, exclusive offers, and fragrance restocks.",
+  "promoCards": [
+    {
+      "label": "Just arrived",
+      "title": "Signature Collection",
+      "button": "Shop now",
+      "image": ""
+    },
+    {
+      "label": "Warm + bold",
+      "title": "Evening Reserve",
+      "button": "Shop now",
+      "image": ""
+    },
+    {
+      "label": "Everyday wear",
+      "title": "Daily Rituals",
+      "button": "Shop now",
+      "image": ""
+    },
+    {
+      "label": "Layer your aura",
+      "title": "Fragrance Oils",
+      "button": "Shop now",
+      "image": ""
+    }
+  ]
+}

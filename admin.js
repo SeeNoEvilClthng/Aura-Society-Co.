@@ -47,7 +47,31 @@ const sampleProducts = [
   }
 ];
 
+const defaultSite = {
+  topBanner: "Free standard shipping on fragrance orders $100+ USD",
+  navLinks: "New Arrivals, Best Sellers, Collections, Fragrance Oils, Gift Cards, Help",
+  heroKicker: "New fragrance drop",
+  heroTitle: "Aura Society Co. Signature Scents",
+  heroSubtitle: "A bold fragrance marketplace for elevated oils, extrait sprays, and daily signature scents.",
+  heroButton: "Shop the collection",
+  featuredTitle: "Featured",
+  featuredLinks: "Signature Collection, Evening Reserve, Daily Rituals, Fragrance Oils",
+  collectionsTitle: "Collections",
+  trendingTitle: "Trending",
+  brandsTitle: "Scent Families",
+  helpTitle: "Need help",
+  vipTitle: "Become a VIP",
+  vipText: "Subscribe to get early access to drops, exclusive offers, and fragrance restocks.",
+  promoCards: [
+    { label: "Just arrived", title: "Signature Collection", button: "Shop now", image: "" },
+    { label: "Warm + bold", title: "Evening Reserve", button: "Shop now", image: "" },
+    { label: "Everyday wear", title: "Daily Rituals", button: "Shop now", image: "" },
+    { label: "Layer your aura", title: "Fragrance Oils", button: "Shop now", image: "" }
+  ]
+};
+
 let products = [];
+let site = defaultSite;
 let selectedImage = "";
 
 const loginShell = document.querySelector("#loginShell");
@@ -72,6 +96,23 @@ const productDescription = document.querySelector("#productDescription");
 const productImage = document.querySelector("#productImage");
 const imagePreview = document.querySelector("#imagePreview");
 const productList = document.querySelector("#adminProductList");
+const siteForm = document.querySelector("#siteForm");
+const saveSiteButton = document.querySelector("#saveSiteButton");
+const siteTopBanner = document.querySelector("#siteTopBanner");
+const siteNavLinks = document.querySelector("#siteNavLinks");
+const siteHeroKicker = document.querySelector("#siteHeroKicker");
+const siteHeroTitle = document.querySelector("#siteHeroTitle");
+const siteHeroSubtitle = document.querySelector("#siteHeroSubtitle");
+const siteHeroButton = document.querySelector("#siteHeroButton");
+const siteFeaturedTitle = document.querySelector("#siteFeaturedTitle");
+const siteFeaturedLinks = document.querySelector("#siteFeaturedLinks");
+const siteCollectionsTitle = document.querySelector("#siteCollectionsTitle");
+const siteTrendingTitle = document.querySelector("#siteTrendingTitle");
+const siteBrandsTitle = document.querySelector("#siteBrandsTitle");
+const siteHelpTitle = document.querySelector("#siteHelpTitle");
+const siteVipTitle = document.querySelector("#siteVipTitle");
+const siteVipText = document.querySelector("#siteVipText");
+const promoEditor = document.querySelector("#promoEditor");
 const saveProductButton = document.querySelector("#saveProductButton");
 const resetButton = document.querySelector("#resetButton");
 const seedButton = document.querySelector("#seedButton");
@@ -89,8 +130,9 @@ async function setAdminVisible(isVisible) {
   exportButton.classList.toggle("hidden", !isVisible);
 
   if (isVisible) {
-    await loadProducts();
+    await Promise.all([loadProducts(), loadSite()]);
     await migrateLegacyProducts();
+    refreshSiteUI();
     refreshProductsUI();
   } else {
     window.setTimeout(() => adminUsername.focus(), 0);
@@ -104,7 +146,17 @@ async function loadProducts() {
     products = Array.isArray(data.products) ? data.products : [];
   } catch (error) {
     products = [];
-    productList.innerHTML = `<div class="empty-state">${error.message}</div>`;
+    productList.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
+    showToast(error.message);
+  }
+}
+
+async function loadSite() {
+  try {
+    const data = await requestJson("/api/site");
+    site = normalizeSite(data.site || defaultSite);
+  } catch (error) {
+    site = defaultSite;
     showToast(error.message);
   }
 }
@@ -139,12 +191,31 @@ async function migrateLegacyProducts() {
 
 function renderCollectionOptions() {
   const collections = [...new Set(products.map((product) => product.collection).filter(Boolean))].sort();
-  collectionOptions.innerHTML = collections.map((collection) => `<option value="${collection}"></option>`).join("");
+  collectionOptions.innerHTML = collections.map((collection) => `<option value="${escapeAttribute(collection)}"></option>`).join("");
 }
 
 function refreshProductsUI() {
   renderCollectionOptions();
   renderProducts();
+}
+
+function refreshSiteUI() {
+  site = normalizeSite(site);
+  siteTopBanner.value = site.topBanner;
+  siteNavLinks.value = site.navLinks;
+  siteHeroKicker.value = site.heroKicker;
+  siteHeroTitle.value = site.heroTitle;
+  siteHeroSubtitle.value = site.heroSubtitle;
+  siteHeroButton.value = site.heroButton;
+  siteFeaturedTitle.value = site.featuredTitle;
+  siteFeaturedLinks.value = site.featuredLinks;
+  siteCollectionsTitle.value = site.collectionsTitle;
+  siteTrendingTitle.value = site.trendingTitle;
+  siteBrandsTitle.value = site.brandsTitle;
+  siteHelpTitle.value = site.helpTitle;
+  siteVipTitle.value = site.vipTitle;
+  siteVipText.value = site.vipText;
+  renderPromoEditor();
 }
 
 async function saveProducts() {
@@ -159,6 +230,18 @@ async function saveProducts() {
   products = Array.isArray(data.products) ? data.products : products;
 }
 
+async function saveSite() {
+  const data = await requestJson("/api/site", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ site })
+  });
+
+  site = normalizeSite(data.site || site);
+}
+
 async function requestJson(url, options) {
   const urls = getApiUrls(url);
   let lastError;
@@ -171,7 +254,7 @@ async function requestJson(url, options) {
     }
   }
 
-  throw lastError || new Error("Products could not save.");
+  throw lastError || new Error("Changes could not save.");
 }
 
 async function fetchJson(url, options) {
@@ -184,7 +267,7 @@ async function fetchJson(url, options) {
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.error || "Products could not save.");
+    throw new Error(data.error || "Changes could not save.");
   }
 
   return data;
@@ -211,10 +294,10 @@ function slugify(value) {
 
 function productImageMarkup(product) {
   if (product.image) {
-    return `<img src="${product.image}" alt="${product.name}">`;
+    return `<img src="${escapeAttribute(product.image)}" alt="${escapeAttribute(product.name)}">`;
   }
 
-  return `<div class="product-placeholder" aria-hidden="true">${product.name.charAt(0)}</div>`;
+  return `<div class="product-placeholder" aria-hidden="true">${escapeHtml(product.name.charAt(0))}</div>`;
 }
 
 function renderPreview(image) {
@@ -223,7 +306,32 @@ function renderPreview(image) {
     return;
   }
 
-  imagePreview.innerHTML = `<img src="${image}" alt="Selected product preview">`;
+  imagePreview.innerHTML = `<img src="${escapeAttribute(image)}" alt="Selected product preview">`;
+}
+
+function renderPromoEditor() {
+  promoEditor.innerHTML = site.promoCards.map((card, index) => `
+    <fieldset class="promo-edit-card">
+      <legend>Homepage card ${index + 1}</legend>
+      <label>
+        Small label
+        <input class="input" data-promo="${index}" data-promo-field="label" value="${escapeAttribute(card.label)}">
+      </label>
+      <label>
+        Card title / collection
+        <input class="input" data-promo="${index}" data-promo-field="title" value="${escapeAttribute(card.title)}">
+      </label>
+      <label>
+        Button text
+        <input class="input" data-promo="${index}" data-promo-field="button" value="${escapeAttribute(card.button)}">
+      </label>
+      <label>
+        Card image
+        <input class="input file-input" type="file" accept="image/*" data-promo-image="${index}">
+      </label>
+      <div class="image-preview promo-preview">${card.image ? `<img src="${escapeAttribute(card.image)}" alt="${escapeAttribute(card.title)}">` : "<span>No card image selected</span>"}</div>
+    </fieldset>
+  `).join("");
 }
 
 function clearForm() {
@@ -262,22 +370,77 @@ function renderProducts() {
     <article class="admin-product">
       <div class="admin-thumb">${productImageMarkup(product)}</div>
       <div>
-        <strong>${product.name}</strong>
-        <p>${product.brand} | ${product.collection || "No collection"} | $${Number(product.price).toFixed(2)}</p>
-        <p>${product.family} | ${product.stock} in stock | ${product.size}</p>
+        <strong>${escapeHtml(product.name)}</strong>
+        <p>${escapeHtml(product.brand)} | ${escapeHtml(product.collection || "No collection")} | $${Number(product.price).toFixed(2)}</p>
+        <p>${escapeHtml(product.family)} | ${product.stock} in stock | ${escapeHtml(product.size)}</p>
       </div>
       <div class="admin-actions">
-        <button class="mini-button" type="button" data-edit="${product.id}">Edit</button>
-        <button class="mini-button danger" type="button" data-delete="${product.id}">Delete</button>
+        <button class="mini-button" type="button" data-edit="${escapeAttribute(product.id)}">Edit</button>
+        <button class="mini-button danger" type="button" data-delete="${escapeAttribute(product.id)}">Delete</button>
       </div>
     </article>
   `).join("");
+}
+
+function siteFromForm() {
+  return normalizeSite({
+    topBanner: siteTopBanner.value,
+    navLinks: siteNavLinks.value,
+    heroKicker: siteHeroKicker.value,
+    heroTitle: siteHeroTitle.value,
+    heroSubtitle: siteHeroSubtitle.value,
+    heroButton: siteHeroButton.value,
+    featuredTitle: siteFeaturedTitle.value,
+    featuredLinks: siteFeaturedLinks.value,
+    collectionsTitle: siteCollectionsTitle.value,
+    trendingTitle: siteTrendingTitle.value,
+    brandsTitle: siteBrandsTitle.value,
+    helpTitle: siteHelpTitle.value,
+    vipTitle: siteVipTitle.value,
+    vipText: siteVipText.value,
+    promoCards: site.promoCards
+  });
+}
+
+function normalizeSite(value) {
+  const source = value && typeof value === "object" ? value : {};
+  return {
+    ...defaultSite,
+    ...source,
+    promoCards: normalizePromoCards(source.promoCards)
+  };
+}
+
+function normalizePromoCards(cards) {
+  const sourceCards = Array.isArray(cards) ? cards : [];
+  return defaultSite.promoCards.map((fallback, index) => {
+    const card = sourceCards[index] && typeof sourceCards[index] === "object" ? sourceCards[index] : {};
+    return {
+      label: String(card.label || fallback.label).trim(),
+      title: String(card.title || fallback.title).trim(),
+      button: String(card.button || fallback.button).trim(),
+      image: String(card.image || fallback.image || "").trim()
+    };
+  });
 }
 
 function showToast(message) {
   toast.textContent = message;
   toast.classList.add("is-visible");
   window.setTimeout(() => toast.classList.remove("is-visible"), 2400);
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeAttribute(value) {
+  return escapeHtml(value);
 }
 
 loginForm.addEventListener("submit", (event) => {
@@ -317,6 +480,48 @@ productImage.addEventListener("change", () => {
     renderPreview(selectedImage);
   });
   reader.readAsDataURL(file);
+});
+
+siteForm.addEventListener("input", (event) => {
+  const promoInput = event.target.closest("[data-promo]");
+  if (!promoInput) {
+    site = siteFromForm();
+    return;
+  }
+
+  const index = Number(promoInput.dataset.promo);
+  const field = promoInput.dataset.promoField;
+  site.promoCards[index][field] = promoInput.value;
+});
+
+promoEditor.addEventListener("change", (event) => {
+  const input = event.target.closest("[data-promo-image]");
+  if (!input || !input.files[0]) return;
+
+  const index = Number(input.dataset.promoImage);
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    site.promoCards[index].image = reader.result;
+    renderPromoEditor();
+  });
+  reader.readAsDataURL(input.files[0]);
+});
+
+saveSiteButton.addEventListener("click", async () => {
+  saveSiteButton.disabled = true;
+  saveSiteButton.textContent = "Saving...";
+  site = siteFromForm();
+
+  try {
+    await saveSite();
+    refreshSiteUI();
+    showToast("Homepage saved.");
+  } catch (error) {
+    showToast(error.message);
+  } finally {
+    saveSiteButton.disabled = false;
+    saveSiteButton.textContent = "Save homepage";
+  }
 });
 
 form.addEventListener("submit", async (event) => {
@@ -420,11 +625,11 @@ seedButton.addEventListener("click", async () => {
 });
 
 exportButton.addEventListener("click", () => {
-  const blob = new Blob([JSON.stringify(products, null, 2)], { type: "application/json" });
+  const blob = new Blob([JSON.stringify({ site, products }, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "aura-society-products.json";
+  link.download = "aura-society-storefront.json";
   link.click();
   URL.revokeObjectURL(url);
 });

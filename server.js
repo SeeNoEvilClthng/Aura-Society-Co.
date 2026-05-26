@@ -10,8 +10,10 @@ const SITE_URL = process.env.SITE_URL || `http://localhost:${PORT}`;
 const publicDir = __dirname;
 const dataDir = path.join(__dirname, "data");
 const productsPath = path.join(dataDir, "products.json");
+const sitePath = path.join(dataDir, "site.json");
 const catalogDir = path.join(__dirname, "catalog");
 const catalogPath = path.join(catalogDir, "products.json");
+const catalogSitePath = path.join(catalogDir, "site.json");
 
 const sampleProducts = [
   {
@@ -55,6 +57,29 @@ const sampleProducts = [
   }
 ];
 
+const defaultSite = {
+  topBanner: "Free standard shipping on fragrance orders $100+ USD",
+  navLinks: "New Arrivals, Best Sellers, Collections, Fragrance Oils, Gift Cards, Help",
+  heroKicker: "New fragrance drop",
+  heroTitle: "Aura Society Co. Signature Scents",
+  heroSubtitle: "A bold fragrance marketplace for elevated oils, extrait sprays, and daily signature scents.",
+  heroButton: "Shop the collection",
+  featuredTitle: "Featured",
+  featuredLinks: "Signature Collection, Evening Reserve, Daily Rituals, Fragrance Oils",
+  collectionsTitle: "Collections",
+  trendingTitle: "Trending",
+  brandsTitle: "Scent Families",
+  helpTitle: "Need help",
+  vipTitle: "Become a VIP",
+  vipText: "Subscribe to get early access to drops, exclusive offers, and fragrance restocks.",
+  promoCards: [
+    { label: "Just arrived", title: "Signature Collection", button: "Shop now", image: "" },
+    { label: "Warm + bold", title: "Evening Reserve", button: "Shop now", image: "" },
+    { label: "Everyday wear", title: "Daily Rituals", button: "Shop now", image: "" },
+    { label: "Layer your aura", title: "Fragrance Oils", button: "Shop now", image: "" }
+  ]
+};
+
 const mimeTypes = {
   ".css": "text/css; charset=utf-8",
   ".html": "text/html; charset=utf-8",
@@ -81,6 +106,11 @@ const server = http.createServer(async (request, response) => {
 
     if (requestUrl.pathname === "/api/products") {
       await handleProducts(request, response);
+      return;
+    }
+
+    if (requestUrl.pathname === "/api/site") {
+      await handleSite(request, response);
       return;
     }
 
@@ -123,6 +153,24 @@ async function handleProducts(request, response) {
 
     writeProducts(dedupeProducts(products.map(normalizeProduct)));
     sendJson(response, 200, { products: readProducts() });
+    return;
+  }
+
+  sendJson(response, 405, { error: "Method not allowed." });
+}
+
+async function handleSite(request, response) {
+  if (request.method === "GET" || request.method === "HEAD") {
+    sendJson(response, 200, { site: readSite() });
+    return;
+  }
+
+  if (request.method === "PUT") {
+    const payload = await readJson(request);
+    const site = payload.site || payload;
+
+    writeSite(normalizeSite(site));
+    sendJson(response, 200, { site: readSite() });
     return;
   }
 
@@ -284,6 +332,10 @@ function ensureDataStore() {
   if (!fs.existsSync(productsPath)) {
     writeProducts(sampleProducts);
   }
+
+  if (!fs.existsSync(sitePath)) {
+    writeSite(defaultSite);
+  }
 }
 
 function readProducts() {
@@ -311,6 +363,30 @@ function writeProducts(products) {
   fs.writeFileSync(catalogPath, content);
 }
 
+function readSite() {
+  ensureDataStore();
+
+  try {
+    return normalizeSite(JSON.parse(fs.readFileSync(sitePath, "utf8")));
+  } catch {
+    writeSite(defaultSite);
+    return defaultSite;
+  }
+}
+
+function writeSite(site) {
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+  if (!fs.existsSync(catalogDir)) {
+    fs.mkdirSync(catalogDir, { recursive: true });
+  }
+
+  const content = `${JSON.stringify(normalizeSite(site), null, 2)}\n`;
+  fs.writeFileSync(sitePath, content);
+  fs.writeFileSync(catalogSitePath, content);
+}
+
 function normalizeProduct(product) {
   return {
     id: sanitize(product.id, 120) || `product-${Date.now().toString(36)}`,
@@ -325,6 +401,41 @@ function normalizeProduct(product) {
     stock: clampInteger(product.stock, 0, 999999),
     image: sanitize(product.image, 10_000_000)
   };
+}
+
+function normalizeSite(site) {
+  const source = site && typeof site === "object" ? site : {};
+  return {
+    ...defaultSite,
+    topBanner: sanitize(source.topBanner || defaultSite.topBanner, 160),
+    navLinks: sanitize(source.navLinks || defaultSite.navLinks, 240),
+    heroKicker: sanitize(source.heroKicker || defaultSite.heroKicker, 120),
+    heroTitle: sanitize(source.heroTitle || defaultSite.heroTitle, 140),
+    heroSubtitle: sanitize(source.heroSubtitle || defaultSite.heroSubtitle, 260),
+    heroButton: sanitize(source.heroButton || defaultSite.heroButton, 80),
+    featuredTitle: sanitize(source.featuredTitle || defaultSite.featuredTitle, 80),
+    featuredLinks: sanitize(source.featuredLinks || defaultSite.featuredLinks, 240),
+    collectionsTitle: sanitize(source.collectionsTitle || defaultSite.collectionsTitle, 80),
+    trendingTitle: sanitize(source.trendingTitle || defaultSite.trendingTitle, 80),
+    brandsTitle: sanitize(source.brandsTitle || defaultSite.brandsTitle, 80),
+    helpTitle: sanitize(source.helpTitle || defaultSite.helpTitle, 80),
+    vipTitle: sanitize(source.vipTitle || defaultSite.vipTitle, 80),
+    vipText: sanitize(source.vipText || defaultSite.vipText, 260),
+    promoCards: normalizePromoCards(source.promoCards)
+  };
+}
+
+function normalizePromoCards(cards) {
+  const sourceCards = Array.isArray(cards) ? cards : [];
+  return defaultSite.promoCards.map((fallback, index) => {
+    const card = sourceCards[index] && typeof sourceCards[index] === "object" ? sourceCards[index] : {};
+    return {
+      label: sanitize(card.label || fallback.label, 80),
+      title: sanitize(card.title || fallback.title, 100),
+      button: sanitize(card.button || fallback.button, 60),
+      image: sanitize(card.image || fallback.image, 10_000_000)
+    };
+  });
 }
 
 function dedupeProducts(products) {

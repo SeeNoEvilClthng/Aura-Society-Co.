@@ -38,9 +38,82 @@
 
     <main id="adminShell" class="admin-shell hidden">
       <section class="admin-intro">
-        <p class="eyebrow">Product admin</p>
-        <h1>Manage Fragrances</h1>
-        <p>Add products, upload pictures, edit details, and control what appears in the customer marketplace.</p>
+        <p class="eyebrow">Store admin</p>
+        <h1>Manage Aura Society</h1>
+        <p>Edit the homepage interface, collection cards, products, pictures, and every fragrance shown to customers.</p>
+      </section>
+
+      <section class="site-editor admin-products">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Homepage design</p>
+            <h2>Storefront Sections</h2>
+          </div>
+          <button id="saveSiteButton" class="secondary-button" type="button">Save homepage</button>
+        </div>
+        <form id="siteForm" class="site-form">
+          <div class="form-grid">
+            <label>
+              Top banner
+              <input id="siteTopBanner" class="input" placeholder="Free standard shipping on fragrance orders $100+ USD">
+            </label>
+            <label>
+              Nav links
+              <input id="siteNavLinks" class="input" placeholder="New Arrivals, Best Sellers, Collections">
+            </label>
+            <label>
+              Hero kicker
+              <input id="siteHeroKicker" class="input" placeholder="New fragrance drop">
+            </label>
+            <label>
+              Hero title
+              <input id="siteHeroTitle" class="input" placeholder="Aura Society Co. Signature Scents">
+            </label>
+          </div>
+          <label>
+            Hero subtitle
+            <textarea id="siteHeroSubtitle" class="input textarea" placeholder="Main homepage message"></textarea>
+          </label>
+          <div class="form-grid">
+            <label>
+              Hero button
+              <input id="siteHeroButton" class="input" placeholder="Shop the collection">
+            </label>
+            <label>
+              Featured title
+              <input id="siteFeaturedTitle" class="input" placeholder="Featured">
+            </label>
+            <label>
+              Featured links
+              <input id="siteFeaturedLinks" class="input" placeholder="Signature Collection, Evening Reserve, Daily Rituals, Fragrance Oils">
+            </label>
+            <label>
+              Collections title
+              <input id="siteCollectionsTitle" class="input" placeholder="Collections">
+            </label>
+            <label>
+              Trending title
+              <input id="siteTrendingTitle" class="input" placeholder="Trending">
+            </label>
+            <label>
+              Scent family section title
+              <input id="siteBrandsTitle" class="input" placeholder="Scent Families">
+            </label>
+            <label>
+              Help title
+              <input id="siteHelpTitle" class="input" placeholder="Need help">
+            </label>
+            <label>
+              VIP title
+              <input id="siteVipTitle" class="input" placeholder="Become a VIP">
+            </label>
+          </div>
+          <label>
+            VIP text
+            <textarea id="siteVipText" class="input textarea" placeholder="Subscribe message"></textarea>
+          </label>
+          <div id="promoEditor" class="promo-editor"></div>
+        </form>
       </section>
 
       <section class="admin-layout">
@@ -125,6 +198,6 @@
     </main>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script src="admin.js?v=dedupe-delete-20260526"></script>
+    <script src="admin.js?v=retail-layout-20260526"></script>
   </body>
 </html>

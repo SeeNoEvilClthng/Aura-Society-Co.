@@ -5,11 +5,52 @@ const currency = new Intl.NumberFormat("en-US", {
   currency: "USD"
 });
 
+const defaultSite = {
+  topBanner: "Free standard shipping on fragrance orders $100+ USD",
+  navLinks: "New Arrivals, Best Sellers, Collections, Fragrance Oils, Gift Cards, Help",
+  heroKicker: "New fragrance drop",
+  heroTitle: "Aura Society Co. Signature Scents",
+  heroSubtitle: "A bold fragrance marketplace for elevated oils, extrait sprays, and daily signature scents.",
+  heroButton: "Shop the collection",
+  featuredTitle: "Featured",
+  featuredLinks: "Signature Collection, Evening Reserve, Daily Rituals, Fragrance Oils",
+  collectionsTitle: "Collections",
+  trendingTitle: "Trending",
+  brandsTitle: "Scent Families",
+  helpTitle: "Need help",
+  vipTitle: "Become a VIP",
+  vipText: "Subscribe to get early access to drops, exclusive offers, and fragrance restocks.",
+  promoCards: [
+    { label: "Just arrived", title: "Signature Collection", button: "Shop now", image: "" },
+    { label: "Warm + bold", title: "Evening Reserve", button: "Shop now", image: "" },
+    { label: "Everyday wear", title: "Daily Rituals", button: "Shop now", image: "" },
+    { label: "Layer your aura", title: "Fragrance Oils", button: "Shop now", image: "" }
+  ]
+};
+
 const API_BASE = getApiBase();
 let products = [];
+let site = defaultSite;
 let activeCollection = "all";
 let cart = loadCart();
 
+const topBanner = document.querySelector("#topBanner");
+const primaryNav = document.querySelector("#primaryNav");
+const heroPanels = document.querySelector("#heroPanels");
+const heroKicker = document.querySelector("#heroKicker");
+const heroTitle = document.querySelector("#heroTitle");
+const heroSubtitle = document.querySelector("#heroSubtitle");
+const heroButton = document.querySelector("#heroButton");
+const featuredTitle = document.querySelector("#featuredTitle");
+const featuredTiles = document.querySelector("#featuredTiles");
+const collectionsTitle = document.querySelector("#collectionsTitle");
+const promoGrid = document.querySelector("#promoGrid");
+const trendingTitle = document.querySelector("#trendingTitle");
+const brandsTitle = document.querySelector("#brandsTitle");
+const familyTiles = document.querySelector("#familyTiles");
+const helpTitle = document.querySelector("#helpTitle");
+const vipTitle = document.querySelector("#vipTitle");
+const vipText = document.querySelector("#vipText");
 const productGrid = document.querySelector("#productGrid");
 const collectionTabs = document.querySelector("#collectionTabs");
 const productCount = document.querySelector("#productCount");
@@ -33,17 +74,20 @@ function loadCart() {
   }
 }
 
-async function loadProducts() {
+async function loadStorefront() {
   productGrid.innerHTML = '<div class="empty-state">Loading fragrances...</div>';
 
   try {
-    products = await fetchProducts();
+    const [productData, siteData] = await Promise.all([fetchProducts(), fetchSite()]);
+    products = productData;
+    site = normalizeSite(siteData);
+    renderSite();
     populateFamilies();
     renderCollectionTabs();
     renderProducts();
     renderCart();
   } catch (error) {
-    productGrid.innerHTML = `<div class="empty-state">${error.message}</div>`;
+    productGrid.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
     showToast(error.message);
   }
 }
@@ -58,6 +102,15 @@ async function fetchProducts() {
   }
 }
 
+async function fetchSite() {
+  try {
+    const data = await requestJson(`${API_BASE}/api/site`);
+    return data.site || defaultSite;
+  } catch {
+    return requestJson("/catalog/site.json");
+  }
+}
+
 async function requestJson(url, options) {
   const response = await fetch(url, options);
   const contentType = response.headers.get("content-type") || "";
@@ -69,10 +122,99 @@ async function requestJson(url, options) {
 
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.error || "Products could not load.");
+    throw new Error(data.error || "Storefront content could not load.");
   }
 
   return data;
+}
+
+function normalizeSite(value) {
+  const source = value && typeof value === "object" ? value : {};
+  return {
+    ...defaultSite,
+    ...source,
+    promoCards: Array.isArray(source.promoCards) && source.promoCards.length ? source.promoCards : defaultSite.promoCards
+  };
+}
+
+function renderSite() {
+  topBanner.textContent = site.topBanner;
+  heroKicker.textContent = site.heroKicker;
+  heroTitle.textContent = site.heroTitle;
+  heroSubtitle.textContent = site.heroSubtitle;
+  heroButton.textContent = site.heroButton;
+  featuredTitle.textContent = site.featuredTitle;
+  collectionsTitle.textContent = site.collectionsTitle;
+  trendingTitle.textContent = site.trendingTitle;
+  brandsTitle.textContent = site.brandsTitle;
+  helpTitle.textContent = site.helpTitle;
+  vipTitle.textContent = site.vipTitle;
+  vipText.textContent = site.vipText;
+  renderNav();
+  renderHeroPanels();
+  renderFeaturedTiles();
+  renderPromoGrid();
+  renderFamilyTiles();
+}
+
+function renderNav() {
+  const links = splitList(site.navLinks);
+  primaryNav.innerHTML = links.map((label) => `<a href="#shop">${escapeHtml(label)}</a>`).join("");
+}
+
+function renderHeroPanels() {
+  const heroProducts = products.slice(0, 3);
+  heroPanels.innerHTML = [0, 1, 2].map((index) => {
+    const product = heroProducts[index];
+    return `
+      <div class="hero-panel">
+        ${productImage(product, "hero")}
+        <span>${escapeHtml(product?.collection || product?.family || "Aura Society Co.")}</span>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderFeaturedTiles() {
+  const links = splitList(site.featuredLinks).slice(0, 4);
+  featuredTiles.innerHTML = links.map((label, index) => {
+    const product = products.find((entry) => entry.collection === label) || products[index];
+    return `
+      <button class="feature-tile" type="button" data-jump="${escapeHtml(label)}">
+        ${productImage(product, "tile")}
+        <span>${escapeHtml(label)}</span>
+      </button>
+    `;
+  }).join("");
+}
+
+function renderPromoGrid() {
+  promoGrid.innerHTML = site.promoCards.slice(0, 4).map((card, index) => {
+    const product = products.find((entry) => entry.collection === card.title) || products[index];
+    return `
+      <article class="promo-card" data-jump="${escapeHtml(card.title)}">
+        <div class="promo-media">${card.image ? `<img src="${escapeAttribute(card.image)}" alt="${escapeAttribute(card.title)}">` : productImage(product, "tile")}</div>
+        <div class="promo-copy">
+          <span>${escapeHtml(card.label)}</span>
+          <h3>${escapeHtml(card.title)}</h3>
+          <button class="primary-button" type="button" data-jump="${escapeHtml(card.title)}">${escapeHtml(card.button)}</button>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+function renderFamilyTiles() {
+  const families = [...new Set(products.map((product) => product.family).filter(Boolean))].sort();
+  familyTiles.innerHTML = families.map((family, index) => {
+    const product = products.find((entry) => entry.family === family) || products[index];
+    return `
+      <button class="family-tile" type="button" data-family="${escapeHtml(family)}">
+        ${productImage(product, "tile")}
+        <strong>${escapeHtml(family)}</strong>
+      </button>
+    `;
+  }).join("");
 }
 
 function renderCollectionTabs() {
@@ -82,7 +224,6 @@ function renderCollectionTabs() {
   }
 
   const tabs = ["all", ...collections];
-
   collectionTabs.innerHTML = tabs.map((collection) => {
     const isActive = collection === activeCollection;
     const label = collection === "all" ? "All Collections" : collection;
@@ -91,8 +232,8 @@ function renderCollectionTabs() {
       : products.filter((product) => product.collection === collection).length;
 
     return `
-      <button class="collection-tab ${isActive ? "is-active" : ""}" type="button" data-collection="${collection}" aria-pressed="${isActive}">
-        <span>${label}</span>
+      <button class="collection-tab ${isActive ? "is-active" : ""}" type="button" data-collection="${escapeHtml(collection)}" aria-pressed="${isActive}">
+        <span>${escapeHtml(label)}</span>
         <small>${count}</small>
       </button>
     `;
@@ -103,16 +244,17 @@ function saveCart() {
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
 }
 
-function productImage(product) {
-  if (product.image) {
-    return `<img src="${product.image}" alt="${product.name} fragrance bottle">`;
+function productImage(product, variant = "card") {
+  if (product?.image) {
+    return `<img src="${escapeAttribute(product.image)}" alt="${escapeAttribute(product.name)} fragrance">`;
   }
 
-  return `<div class="product-placeholder" aria-hidden="true">${product.name.charAt(0)}</div>`;
+  const label = product?.name?.charAt(0) || "A";
+  return `<div class="product-placeholder ${variant === "hero" ? "is-hero" : ""}" aria-hidden="true">${escapeHtml(label)}</div>`;
 }
 
 function populateFamilies() {
-  const families = [...new Set(products.map((product) => product.family))].sort();
+  const families = [...new Set(products.map((product) => product.family).filter(Boolean))].sort();
   familyFilter.innerHTML = '<option value="all">All families</option>';
   families.forEach((family) => {
     const option = document.createElement("option");
@@ -153,25 +295,23 @@ function renderProducts() {
   }
 
   productGrid.innerHTML = visibleProducts.map((product) => `
-    <article class="product-card">
+    <article class="product-card retail-product-card">
       <div class="product-image">${productImage(product)}</div>
       <div class="product-info">
-        <div>
-          <div class="product-meta">
-            <span>${product.brand}</span>
-            <span>${product.size}</span>
-          </div>
-          <h3>${product.name}</h3>
-          <p class="notes">${product.notes}</p>
-        </div>
         <div class="product-meta">
-          <span>${product.collection || product.family}</span>
+          <span>${escapeHtml(product.brand)}</span>
+          <span>Star 5.0</span>
+        </div>
+        <h3>${escapeHtml(product.name)}</h3>
+        <p class="notes">${escapeHtml(product.notes)}</p>
+        <div class="product-meta">
+          <span>${escapeHtml(product.size)}</span>
           <span>${product.stock > 0 ? `${product.stock} in stock` : "Sold out"}</span>
         </div>
         <div class="price-row">
           <span class="price">${currency.format(product.price)}</span>
-          <button class="primary-button" type="button" data-add="${product.id}" ${product.stock <= 0 ? "disabled" : ""}>
-            Add to cart
+          <button class="primary-button" type="button" data-add="${escapeAttribute(product.id)}" ${product.stock <= 0 ? "disabled" : ""}>
+            Add to bag
           </button>
         </div>
       </div>
@@ -200,13 +340,13 @@ function renderCart() {
     <div class="cart-item">
       <div class="cart-thumb">${productImage(item.product)}</div>
       <div>
-        <strong>${item.product.name}</strong>
-        <p class="microcopy">${currency.format(item.product.price)} | ${item.product.size}</p>
+        <strong>${escapeHtml(item.product.name)}</strong>
+        <p class="microcopy">${currency.format(item.product.price)} | ${escapeHtml(item.product.size)}</p>
       </div>
-      <div class="quantity" aria-label="Quantity controls for ${item.product.name}">
-        <button type="button" data-decrease="${item.id}" aria-label="Decrease quantity">-</button>
+      <div class="quantity" aria-label="Quantity controls for ${escapeAttribute(item.product.name)}">
+        <button type="button" data-decrease="${escapeAttribute(item.id)}" aria-label="Decrease quantity">-</button>
         <strong>${item.quantity}</strong>
-        <button type="button" data-increase="${item.id}" aria-label="Increase quantity">+</button>
+        <button type="button" data-increase="${escapeAttribute(item.id)}" aria-label="Increase quantity">+</button>
       </div>
     </div>
   `).join("");
@@ -225,7 +365,7 @@ function addToCart(productId) {
 
   saveCart();
   renderCart();
-  showToast(`${product.name} added to cart.`);
+  showToast(`${product.name} added to bag.`);
 }
 
 function updateQuantity(productId, change) {
@@ -244,6 +384,18 @@ function updateQuantity(productId, change) {
   renderCart();
 }
 
+function jumpToCollection(label) {
+  const collectionMatch = products.some((product) => product.collection === label);
+  const familyMatch = products.some((product) => product.family === label);
+
+  if (collectionMatch) activeCollection = label;
+  if (familyMatch) familyFilter.value = label;
+
+  renderCollectionTabs();
+  renderProducts();
+  document.querySelector("#shop").scrollIntoView({ behavior: "smooth" });
+}
+
 function openCart() {
   cartDrawer.classList.add("is-open");
   cartDrawer.setAttribute("aria-hidden", "false");
@@ -258,6 +410,26 @@ function showToast(message) {
   toast.textContent = message;
   toast.classList.add("is-visible");
   window.setTimeout(() => toast.classList.remove("is-visible"), 2400);
+}
+
+function splitList(value) {
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeAttribute(value) {
+  return escapeHtml(value);
 }
 
 productGrid.addEventListener("click", (event) => {
@@ -275,6 +447,23 @@ collectionTabs.addEventListener("click", (event) => {
   activeCollection = button.dataset.collection;
   renderCollectionTabs();
   renderProducts();
+});
+
+[featuredTiles, promoGrid].forEach((element) => {
+  element.addEventListener("click", (event) => {
+    const target = event.target.closest("[data-jump]");
+    if (target) jumpToCollection(target.dataset.jump);
+  });
+});
+
+familyTiles.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-family]");
+  if (!button) return;
+  familyFilter.value = button.dataset.family;
+  activeCollection = "all";
+  renderCollectionTabs();
+  renderProducts();
+  document.querySelector("#shop").scrollIntoView({ behavior: "smooth" });
 });
 
 cartItems.addEventListener("click", (event) => {
@@ -299,7 +488,7 @@ checkoutForm.addEventListener("submit", async (event) => {
     .filter((item) => item.product);
 
   if (!activeItems.length) {
-    showToast("Your cart is empty.");
+    showToast("Your bag is empty.");
     return;
   }
 
@@ -357,5 +546,5 @@ function getApiBase() {
   control.addEventListener("input", renderProducts);
 });
 
-loadProducts();
+loadStorefront();
 renderCart();
