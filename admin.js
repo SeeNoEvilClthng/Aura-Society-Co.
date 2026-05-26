@@ -1,7 +1,7 @@
 const AUTH_KEY = "auraSocietyAdminAuth";
 const ADMIN_USERNAME = "XThaBoss2";
 const ADMIN_PASSWORD = "ZaraAleah12!";
-const API_BASE = getApiBase();
+const LOCAL_API_BASE = "http://localhost:4173";
 const LEGACY_PRODUCTS_KEY = "auraSocietyProducts";
 const LEGACY_MIGRATION_KEY = "auraSocietyProductsMigrated";
 
@@ -100,7 +100,7 @@ async function setAdminVisible(isVisible) {
 async function loadProducts() {
   try {
     productList.innerHTML = '<div class="empty-state">Loading products...</div>';
-    const data = await requestJson(`${API_BASE}/api/products`);
+    const data = await requestJson("/api/products");
     products = Array.isArray(data.products) ? data.products : [];
   } catch (error) {
     products = [];
@@ -148,7 +148,7 @@ function refreshProductsUI() {
 }
 
 async function saveProducts() {
-  const data = await requestJson(`${API_BASE}/api/products`, {
+  const data = await requestJson("/api/products", {
     method: "PUT",
     headers: {
       "Content-Type": "application/json"
@@ -160,12 +160,26 @@ async function saveProducts() {
 }
 
 async function requestJson(url, options) {
+  const urls = getApiUrls(url);
+  let lastError;
+
+  for (const candidate of urls) {
+    try {
+      return await fetchJson(candidate, options);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error("Products could not save.");
+}
+
+async function fetchJson(url, options) {
   const response = await fetch(url, options);
   const contentType = response.headers.get("content-type") || "";
 
   if (!contentType.includes("application/json")) {
-    await response.text();
-    throw new Error("Admin product saving requires the Node server. Run npm start and open http://localhost:4173/admin.html.");
+    throw new Error(`Expected JSON from ${url}.`);
   }
 
   const data = await response.json();
@@ -176,13 +190,15 @@ async function requestJson(url, options) {
   return data;
 }
 
-function getApiBase() {
-  const localHosts = new Set(["localhost", "127.0.0.1", "::1", ""]);
-  if (window.location.protocol === "file:" || (localHosts.has(window.location.hostname) && window.location.port !== "4173")) {
-    return "http://localhost:4173";
-  }
+function getApiUrls(path) {
+  const sameOriginUrl = path;
+  const localApiUrl = `${LOCAL_API_BASE}${path}`;
+  return getShouldPreferLocalApi() ? [localApiUrl, sameOriginUrl] : [sameOriginUrl, localApiUrl];
+}
 
-  return "";
+function getShouldPreferLocalApi() {
+  const localHosts = new Set(["localhost", "127.0.0.1", "::1", ""]);
+  return window.location.protocol === "file:" || (localHosts.has(window.location.hostname) && window.location.port !== "4173");
 }
 
 function slugify(value) {
