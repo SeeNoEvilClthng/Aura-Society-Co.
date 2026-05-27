@@ -39,11 +39,19 @@ module.exports = async function handler(request, response) {
     // Do not set payment_method_types here. Stripe Checkout will show eligible
     // methods enabled in the Stripe Dashboard, such as cards, Cash App Pay,
     // PayPal, wallets, Link, and buy-now-pay-later options where available.
+    params.set("payment_method_collection", "always");
+    params.set("billing_address_collection", "required");
+    params.set("phone_number_collection[enabled]", "true");
+    params.set("allow_promotion_codes", "true");
     params.set("success_url", `${siteUrl}/success.html?session_id={CHECKOUT_SESSION_ID}`);
     params.set("cancel_url", `${siteUrl}/index.html`);
     params.set("shipping_address_collection[allowed_countries][0]", "US");
     params.set("metadata[customer_name]", sanitize(customer.name, 120));
     params.set("metadata[shipping_address]", sanitize(customer.address, 450));
+
+    if (process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION) {
+      params.set("payment_method_configuration", process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION);
+    }
 
     if (isEmail(customer.email)) {
       params.set("customer_email", customer.email.trim());

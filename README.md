@@ -19,7 +19,9 @@ Online fragrance marketplace prototype with a customer storefront, Stripe Checko
 
 The checkout flow creates a Stripe Checkout Session from the cart and redirects the customer to Stripe-hosted payment.
 
-Stripe Checkout is configured to use dashboard-managed dynamic payment methods. To show methods like Cash App Pay, PayPal, Apple Pay, Google Pay, Link, Klarna, Afterpay/Clearpay, Affirm, and eligible bank options, enable them in Stripe Dashboard under **Settings > Payment methods**. Stripe decides which enabled methods appear based on customer location, currency, amount, device/browser, and account eligibility.
+Stripe Checkout is configured to use dashboard-managed dynamic payment methods instead of hard-coded card-only payments. To show methods like Cash App Pay, PayPal, Apple Pay, Google Pay, Link, Klarna, Afterpay/Clearpay, Affirm, and eligible bank options, enable them in Stripe Dashboard under **Settings > Payment methods**. Stripe decides which enabled methods appear based on customer location, currency, amount, device/browser, and account eligibility.
+
+Checkout also collects billing address, phone number, shipping address, and promotion codes before redirecting to Stripe payment. If Stripe gives you a custom payment method configuration ID, add it as `STRIPE_PAYMENT_METHOD_CONFIGURATION`.
 
 ## Vercel Setup
 
@@ -28,6 +30,7 @@ Use the repository root as the Vercel project root. Leave the framework preset a
 Add these environment variables in Vercel Project Settings:
 
 - `STRIPE_SECRET_KEY`: Stripe secret key. Use `sk_test_...` first, then switch to live when ready.
+- `STRIPE_PAYMENT_METHOD_CONFIGURATION`: Optional Stripe payment method configuration ID.
 - `SITE_URL`: Your production URL, such as `https://your-domain.com`.
 - `SUPABASE_URL`: Your Supabase project URL.
 - `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase service-role key. Keep this server-side only.

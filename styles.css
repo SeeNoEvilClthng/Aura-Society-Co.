@@ -1879,6 +1879,15 @@ h3 {
   background: #050505;
 }
 
+.cash-pay {
+  background: #00d632;
+}
+
+.link-pay {
+  background: #00d4ff;
+  color: #08111a !important;
+}
+
 .checkout-divider {
   position: relative;
   display: grid;
