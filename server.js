@@ -230,7 +230,6 @@ async function createCheckoutSession(request, response) {
   // Do not set payment_method_types here. Stripe Checkout will show eligible methods
   // enabled in the Stripe Dashboard, such as cards, Cash App Pay, PayPal, wallets,
   // Link, and buy-now-pay-later options where available.
-  params.set("payment_method_collection", "always");
   params.set("billing_address_collection", "required");
   params.set("phone_number_collection[enabled]", "true");
   params.set("allow_promotion_codes", "true");
