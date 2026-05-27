@@ -1,3 +1,9 @@
+const fs = require("fs");
+const path = require("path");
+
+const PRODUCT_KEY = "aura-society-products";
+const catalogPath = path.join(process.cwd(), "catalog", "products.json");
+
 module.exports = async function handler(request, response) {
   applyCors(response);
 
@@ -22,13 +28,15 @@ module.exports = async function handler(request, response) {
     const payload = await readPayload(request);
     const items = Array.isArray(payload.items) ? payload.items : [];
     const customer = payload.customer || {};
+    const products = await readProducts();
+    const checkoutItems = buildCheckoutItems(items, products);
 
-    if (!items.length) {
+    if (!checkoutItems.length) {
       sendJson(response, 400, { error: "Cart is empty." });
       return;
     }
 
-    if (items.length > 100) {
+    if (checkoutItems.length > 100) {
       sendJson(response, 400, { error: "Stripe Checkout supports up to 100 line items." });
       return;
     }
@@ -57,22 +65,17 @@ module.exports = async function handler(request, response) {
       params.set("customer_email", customer.email.trim());
     }
 
-    items.forEach((item, index) => {
-      const name = sanitize(item.name, 120);
-      const size = sanitize(item.size, 40);
-      const description = sanitize(item.description || item.notes || size, 240);
-      const quantity = clampInteger(item.quantity, 1, 999999);
-      const unitAmount = Math.round(Number(item.price) * 100);
-
-      if (!name || !Number.isFinite(unitAmount) || unitAmount < 0) {
-        throw new Error("Invalid checkout item.");
+    checkoutItems.forEach((item, index) => {
+      params.set(`line_items[${index}][quantity]`, String(item.quantity));
+      if (item.product.stripePriceId) {
+        params.set(`line_items[${index}][price]`, item.product.stripePriceId);
+      } else {
+        params.set(`line_items[${index}][price_data][currency]`, "usd");
+        params.set(`line_items[${index}][price_data][unit_amount]`, String(item.unitAmount));
+        params.set(`line_items[${index}][price_data][product_data][name]`, item.product.size ? `${item.product.name} - ${item.product.size}` : item.product.name);
+        params.set(`line_items[${index}][price_data][product_data][description]`, item.product.description || item.product.notes || item.product.collection);
+        params.set(`line_items[${index}][price_data][product_data][metadata][product_id]`, item.product.id);
       }
-
-      params.set(`line_items[${index}][quantity]`, String(quantity));
-      params.set(`line_items[${index}][price_data][currency]`, "usd");
-      params.set(`line_items[${index}][price_data][unit_amount]`, String(unitAmount));
-      params.set(`line_items[${index}][price_data][product_data][name]`, size ? `${name} - ${size}` : name);
-      params.set(`line_items[${index}][price_data][product_data][description]`, description);
     });
 
     const stripeResponse = await fetch("https://api.stripe.com/v1/checkout/sessions", {
@@ -116,6 +119,137 @@ async function readPayload(request) {
   });
 
   return body ? JSON.parse(body) : {};
+}
+
+function buildCheckoutItems(items, products) {
+  return items.map((item) => {
+    const product = products.find((entry) => entry.id === sanitize(item.id, 120));
+    if (!product || product.stock <= 0) return null;
+
+    const quantity = Math.min(clampInteger(item.quantity, 1, 999999), product.stock);
+    const unitAmount = Math.round(Number(product.price) * 100);
+    if (!product.name || !Number.isFinite(unitAmount) || unitAmount < 0) return null;
+
+    return { product, quantity, unitAmount };
+  }).filter(Boolean);
+}
+
+async function readProducts() {
+  if (hasSupabaseConfig()) {
+    const products = await readSupabaseProducts();
+    if (products.length) return products;
+  }
+
+  if (hasKvConfig()) {
+    const stored = await kvCommand(["GET", PRODUCT_KEY]);
+    if (stored) {
+      try {
+        const products = JSON.parse(stored);
+        if (Array.isArray(products)) return products.map(normalizeProduct);
+      } catch {
+        return readCatalogProducts();
+      }
+    }
+  }
+
+  return readCatalogProducts();
+}
+
+async function readSupabaseProducts() {
+  const response = await fetch(`${getSupabaseRestUrl()}?key=eq.${encodeURIComponent(PRODUCT_KEY)}&select=value`, {
+    headers: getSupabaseHeaders()
+  });
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Supabase products could not load.");
+  }
+
+  const value = Array.isArray(data) && data[0] ? data[0].value : [];
+  return Array.isArray(value) ? value.map(normalizeProduct) : [];
+}
+
+async function kvCommand(command) {
+  const response = await fetch(getKvUrl(), {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${getKvToken()}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(command)
+  });
+  const data = await response.json();
+
+  if (!response.ok || data.error) {
+    throw new Error(data.error || "KV request failed.");
+  }
+
+  return data.result;
+}
+
+function readCatalogProducts() {
+  try {
+    const products = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
+    return Array.isArray(products) ? products.map(normalizeProduct) : [];
+  } catch {
+    return [];
+  }
+}
+
+function normalizeProduct(product) {
+  return {
+    id: sanitize(product.id, 120),
+    name: sanitize(product.name, 140),
+    brand: sanitize(product.brand, 140),
+    price: Number.isFinite(Number(product.price)) ? Number(product.price) : 0,
+    size: sanitize(product.size, 60),
+    family: sanitize(product.family, 80),
+    collection: sanitize(product.collection, 120) || "Signature Collection",
+    notes: sanitize(product.notes, 240),
+    description: sanitize(product.description, 600),
+    stock: clampInteger(product.stock, 0, 999999),
+    stripePriceId: sanitize(product.stripePriceId, 120)
+  };
+}
+
+function hasSupabaseConfig() {
+  return Boolean(getSupabaseUrl() && getSupabaseKey());
+}
+
+function getSupabaseRestUrl() {
+  return `${getSupabaseUrl().replace(/\/$/, "")}/rest/v1/${encodeURIComponent(getSupabaseTable())}`;
+}
+
+function getSupabaseHeaders() {
+  const key = getSupabaseKey();
+  return {
+    apikey: key,
+    Authorization: `Bearer ${key}`
+  };
+}
+
+function getSupabaseUrl() {
+  return process.env.SUPABASE_URL || "";
+}
+
+function getSupabaseKey() {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+}
+
+function getSupabaseTable() {
+  return process.env.SUPABASE_PRODUCTS_TABLE || "site_settings";
+}
+
+function hasKvConfig() {
+  return Boolean(getKvUrl() && getKvToken());
+}
+
+function getKvUrl() {
+  return process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || "";
+}
+
+function getKvToken() {
+  return process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || "";
 }
 
 function getSiteUrl(request) {

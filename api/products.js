@@ -22,7 +22,7 @@ module.exports = async function handler(request, response) {
 
     if (request.method === "POST") {
       const payload = await readPayload(request);
-      const product = normalizeProduct(payload.product || payload);
+      const product = await syncStripeCatalogProduct(normalizeProduct(payload.product || payload));
       const products = upsertProduct(await readProducts(), product);
 
       await writeProducts(products);
@@ -252,7 +252,10 @@ function normalizeProduct(product) {
     notes: sanitize(product.notes, 240),
     description: sanitize(product.description, 600),
     stock: clampInteger(product.stock, 0, 999999),
-    image: sanitize(product.image, 10_000_000)
+    image: sanitize(product.image, 10_000_000),
+    stripeProductId: sanitize(product.stripeProductId, 120),
+    stripePriceId: sanitize(product.stripePriceId, 120),
+    stripeUnitAmount: clampInteger(product.stripeUnitAmount, 0, 999999999)
   };
 }
 
@@ -281,6 +284,87 @@ function upsertProduct(products, product) {
 function removeProduct(products, product) {
   const duplicateKey = getProductDuplicateKey(product);
   return products.filter((entry) => entry.id !== product.id && getProductDuplicateKey(entry) !== duplicateKey);
+}
+
+async function syncStripeCatalogProduct(product) {
+  if (!getStripeSecretKey()) return product;
+
+  const unitAmount = Math.round(Number(product.price) * 100);
+  if (!Number.isFinite(unitAmount) || unitAmount < 0) return product;
+
+  const stripeProduct = product.stripeProductId
+    ? await updateStripeProduct(product)
+    : await createStripeProduct(product);
+  const stripePriceId = product.stripePriceId && product.stripeUnitAmount === unitAmount
+    ? product.stripePriceId
+    : await createStripePrice(stripeProduct.id, unitAmount);
+
+  return {
+    ...product,
+    stripeProductId: stripeProduct.id,
+    stripePriceId,
+    stripeUnitAmount: unitAmount
+  };
+}
+
+async function createStripeProduct(product) {
+  const params = new URLSearchParams();
+  params.set("name", product.size ? `${product.name} - ${product.size}` : product.name);
+  params.set("description", product.description || product.notes || product.collection);
+  params.set("metadata[product_id]", product.id);
+  params.set("metadata[brand]", product.brand);
+  params.set("metadata[collection]", product.collection);
+  params.set("metadata[family]", product.family);
+
+  return stripeRequest("/v1/products", params);
+}
+
+async function updateStripeProduct(product) {
+  const params = new URLSearchParams();
+  params.set("name", product.size ? `${product.name} - ${product.size}` : product.name);
+  params.set("description", product.description || product.notes || product.collection);
+  params.set("metadata[product_id]", product.id);
+  params.set("metadata[brand]", product.brand);
+  params.set("metadata[collection]", product.collection);
+  params.set("metadata[family]", product.family);
+
+  try {
+    return await stripeRequest(`/v1/products/${encodeURIComponent(product.stripeProductId)}`, params);
+  } catch {
+    return createStripeProduct(product);
+  }
+}
+
+async function createStripePrice(stripeProductId, unitAmount) {
+  const params = new URLSearchParams();
+  params.set("currency", "usd");
+  params.set("unit_amount", String(unitAmount));
+  params.set("product", stripeProductId);
+
+  const price = await stripeRequest("/v1/prices", params);
+  return price.id;
+}
+
+async function stripeRequest(pathname, params) {
+  const response = await fetch(`https://api.stripe.com${pathname}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${getStripeSecretKey()}`,
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: params
+  });
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error?.message || "Stripe catalog sync failed.");
+  }
+
+  return data;
+}
+
+function getStripeSecretKey() {
+  return process.env.STRIPE_SECRET_KEY || "";
 }
 
 function getProductDuplicateKey(product) {

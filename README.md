@@ -23,6 +23,16 @@ Stripe Checkout is configured to use dashboard-managed dynamic payment methods i
 
 Checkout also collects billing address, phone number, shipping address, and promotion codes before redirecting to Stripe payment. If Stripe gives you a custom payment method configuration ID, add it as `STRIPE_PAYMENT_METHOD_CONFIGURATION`.
 
+Checkout validates cart items against the saved product catalog on the server before creating the Stripe Checkout Session. Admin product saves also sync each fragrance to Stripe as a Product/Price when `STRIPE_SECRET_KEY` is available, so checkout can use the current server-side product and price data.
+
+For order emails, create a Stripe webhook endpoint pointing to:
+
+```text
+https://your-domain.com/api/stripe-webhook
+```
+
+Subscribe it to `checkout.session.completed`, then add the webhook signing secret as `STRIPE_WEBHOOK_SECRET`. Add `RESEND_API_KEY` to send the order notification email to `ORDER_NOTIFICATION_EMAIL`, which defaults to `xswann07@gmail.com`.
+
 ## Vercel Setup
 
 Use the repository root as the Vercel project root. Leave the framework preset as "Other" or static/default.
@@ -30,7 +40,11 @@ Use the repository root as the Vercel project root. Leave the framework preset a
 Add these environment variables in Vercel Project Settings:
 
 - `STRIPE_SECRET_KEY`: Stripe secret key. Use `sk_test_...` first, then switch to live when ready.
+- `STRIPE_WEBHOOK_SECRET`: Stripe webhook signing secret for `/api/stripe-webhook`.
 - `STRIPE_PAYMENT_METHOD_CONFIGURATION`: Optional Stripe payment method configuration ID.
+- `RESEND_API_KEY`: Resend API key for order notification emails.
+- `ORDER_NOTIFICATION_EMAIL`: Email address that receives order alerts.
+- `ORDER_NOTIFICATION_FROM`: Verified sender address for Resend.
 - `SITE_URL`: Your production URL, such as `https://your-domain.com`.
 - `SUPABASE_URL`: Your Supabase project URL.
 - `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase service-role key. Keep this server-side only.
