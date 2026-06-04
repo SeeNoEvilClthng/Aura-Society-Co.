@@ -57,12 +57,13 @@ function renderCollectionsPage() {
   const collections = getCollections();
 
   collectionGrid.innerHTML = collections.map((collection) => {
-    const product = products.find((entry) => entry.collection === collection);
+    const collectionItems = collectionProducts(collection);
+    const product = collectionItems[0];
     return `
       <a class="promo-card" href="${collectionHref(collection)}">
         <div class="promo-media">${productImage(product, "tile")}</div>
         <div class="promo-copy">
-          <span>${collectionProducts(collection).length} fragrances</span>
+          <span>${collectionItems.length} fragrances</span>
           <h3>${escapeHtml(collection)}</h3>
           <strong class="primary-button">Shop now</strong>
         </div>
@@ -329,11 +330,26 @@ function populateFamilies(select, selectedFamily) {
 }
 
 function getCollections() {
-  return [...new Set(products.map((product) => product.collection).filter(Boolean))].sort();
+  return [
+    ...new Set(products.flatMap((product) => [
+      product.collection,
+      product.brand,
+      product.family
+    ]).filter(Boolean))
+  ].sort();
 }
 
 function collectionProducts(collection) {
-  return products.filter((product) => product.collection === collection);
+  const collectionKey = normalizeCollectionKey(collection);
+  return products.filter((product) => [
+    product.collection,
+    product.brand,
+    product.family
+  ].some((value) => normalizeCollectionKey(value) === collectionKey));
+}
+
+function normalizeCollectionKey(value) {
+  return String(value || "").trim().toLowerCase();
 }
 
 function collectionHref(collection) {
