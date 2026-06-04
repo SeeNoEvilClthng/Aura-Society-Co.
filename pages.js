@@ -138,11 +138,24 @@ function renderProductPage() {
 function renderCheckoutPage() {
   const itemsContainer = document.querySelector("#checkoutItems");
   const subtotalEl = document.querySelector("#checkoutSubtotal");
+  const shippingEl = document.querySelector("#checkoutShipping");
   const totalEl = document.querySelector("#checkoutTotal");
   const checkoutForm = document.querySelector("#checkoutForm");
   const checkoutButton = document.querySelector("#checkoutButton");
+  const standardShippingName = document.querySelector("#standardShippingName");
+  const standardShippingPrice = document.querySelector("#standardShippingPrice");
   const activeItems = getActiveCartItems();
   const subtotal = activeItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const isFreeShipping = subtotal >= 100;
+  const getShippingAmount = () => {
+    const selected = document.querySelector("input[name='shippingMethod']:checked")?.value || "standard";
+    return selected === "express" ? 15 : (isFreeShipping ? 0 : 10);
+  };
+  const updateCheckoutTotals = () => {
+    const shipping = getShippingAmount();
+    shippingEl.textContent = shipping === 0 ? "Free" : currency.format(shipping);
+    totalEl.textContent = currency.format(subtotal + shipping);
+  };
 
   if (!activeItems.length) {
     itemsContainer.innerHTML = '<div class="empty-state">Your bag is empty.</div>';
@@ -161,8 +174,13 @@ function renderCheckoutPage() {
     `).join("");
   }
 
+  standardShippingName.textContent = isFreeShipping ? "Free standard shipping" : "Standard shipping";
+  standardShippingPrice.textContent = isFreeShipping ? "Free" : "$10.00";
   subtotalEl.textContent = currency.format(subtotal);
-  totalEl.textContent = currency.format(subtotal);
+  updateCheckoutTotals();
+  document.querySelectorAll("input[name='shippingMethod']").forEach((input) => {
+    input.addEventListener("input", updateCheckoutTotals);
+  });
 
   checkoutForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -203,7 +221,8 @@ function renderCheckoutPage() {
             notes: item.product.notes,
             description: item.product.description,
             quantity: item.quantity
-          }))
+          })),
+          shippingMethod: document.querySelector("input[name='shippingMethod']:checked")?.value || "standard"
         })
       });
 

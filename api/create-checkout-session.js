@@ -30,6 +30,8 @@ module.exports = async function handler(request, response) {
     const customer = payload.customer || {};
     const products = await readProducts();
     const checkoutItems = buildCheckoutItems(items, products);
+    const subtotalCents = checkoutItems.reduce((sum, item) => sum + item.unitAmount * item.quantity, 0);
+    const shippingOptions = buildShippingOptions(subtotalCents, payload.shippingMethod);
 
     if (!checkoutItems.length) {
       sendJson(response, 400, { error: "Cart is empty." });
@@ -55,6 +57,7 @@ module.exports = async function handler(request, response) {
     params.set("shipping_address_collection[allowed_countries][0]", "US");
     params.set("metadata[customer_name]", sanitize(customer.name, 120));
     params.set("metadata[shipping_address]", sanitize(customer.address, 450));
+    params.set("metadata[shipping_method]", shippingOptions[0].key);
 
     if (process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION) {
       params.set("payment_method_configuration", process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION);
@@ -75,6 +78,17 @@ module.exports = async function handler(request, response) {
         params.set(`line_items[${index}][price_data][product_data][description]`, item.product.description || item.product.notes || item.product.collection);
         params.set(`line_items[${index}][price_data][product_data][metadata][product_id]`, item.product.id);
       }
+    });
+
+    shippingOptions.forEach((option, index) => {
+      params.set(`shipping_options[${index}][shipping_rate_data][type]`, "fixed_amount");
+      params.set(`shipping_options[${index}][shipping_rate_data][fixed_amount][amount]`, String(option.amount));
+      params.set(`shipping_options[${index}][shipping_rate_data][fixed_amount][currency]`, "usd");
+      params.set(`shipping_options[${index}][shipping_rate_data][display_name]`, option.name);
+      params.set(`shipping_options[${index}][shipping_rate_data][delivery_estimate][minimum][unit]`, "business_day");
+      params.set(`shipping_options[${index}][shipping_rate_data][delivery_estimate][minimum][value]`, String(option.minDays));
+      params.set(`shipping_options[${index}][shipping_rate_data][delivery_estimate][maximum][unit]`, "business_day");
+      params.set(`shipping_options[${index}][shipping_rate_data][delivery_estimate][maximum][value]`, String(option.maxDays));
     });
 
     const stripeResponse = await fetch("https://api.stripe.com/v1/checkout/sessions", {
@@ -131,6 +145,29 @@ function buildCheckoutItems(items, products) {
 
     return { product, quantity, unitAmount };
   }).filter(Boolean);
+}
+
+function buildShippingOptions(subtotalCents, preferredMethod) {
+  const isFreeEligible = subtotalCents >= 10_000;
+  const standard = {
+    key: isFreeEligible ? "free_standard" : "standard",
+    name: isFreeEligible ? "Free standard shipping" : "Standard shipping",
+    amount: isFreeEligible ? 0 : 1000,
+    minDays: 3,
+    maxDays: 7
+  };
+  const express = {
+    key: "express",
+    name: "Express shipping",
+    amount: 1500,
+    minDays: 1,
+    maxDays: 3
+  };
+  const options = [standard, express];
+  const preferred = options.find((option) => option.key === preferredMethod || (preferredMethod === "standard" && option.key === "free_standard"));
+
+  if (!preferred) return options;
+  return [preferred, ...options.filter((option) => option.key !== preferred.key)];
 }
 
 async function readProducts() {

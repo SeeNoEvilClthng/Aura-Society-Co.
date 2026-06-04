@@ -77,7 +77,25 @@
         </div>
         <div class="summary-lines">
           <p><span>Subtotal</span><strong id="checkoutSubtotal">$0.00</strong></p>
-          <p><span>Shipping</span><small>Calculated at next step</small></p>
+          <div class="shipping-choice" aria-label="Shipping method">
+            <label id="standardShippingLabel">
+              <input type="radio" name="shippingMethod" value="standard" checked>
+              <span>
+                <strong id="standardShippingName">Standard shipping</strong>
+                <small>3-7 business days</small>
+              </span>
+              <b id="standardShippingPrice">$10.00</b>
+            </label>
+            <label>
+              <input type="radio" name="shippingMethod" value="express">
+              <span>
+                <strong>Express shipping</strong>
+                <small>1-3 business days</small>
+              </span>
+              <b>$15.00</b>
+            </label>
+          </div>
+          <p><span>Shipping</span><strong id="checkoutShipping">$10.00</strong></p>
           <p class="summary-total"><span>Total</span><strong id="checkoutTotal">$0.00</strong></p>
         </div>
       </aside>

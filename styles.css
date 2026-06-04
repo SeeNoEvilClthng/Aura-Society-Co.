@@ -2069,6 +2069,37 @@ h3 {
   margin: 0;
 }
 
+.shipping-choice {
+  display: grid;
+  gap: 8px;
+}
+
+.shipping-choice label {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 11px;
+  border: 1px solid #d6d6d6;
+  border-radius: 5px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.shipping-choice label:has(input:checked) {
+  border-color: #1773b0;
+  box-shadow: 0 0 0 1px #1773b0;
+}
+
+.shipping-choice span {
+  display: grid;
+  gap: 2px;
+}
+
+.shipping-choice small {
+  color: #777777;
+}
+
 .summary-lines small {
   color: #777777;
 }
