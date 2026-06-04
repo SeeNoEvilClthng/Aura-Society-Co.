@@ -122,9 +122,9 @@ function renderProductPage() {
       <p class="notes">${escapeHtml(product.notes)}</p>
       <div class="payment-methods">
         <span>${escapeHtml(product.family)}</span>
-        <span>${product.stock > 0 ? `${product.stock} in stock` : "Sold out"}</span>
+        <span>${escapeHtml(product.collection || "Aura Society Co.")}</span>
       </div>
-      <button class="primary-button product-add" type="button" data-add="${escapeAttribute(product.id)}" ${product.stock <= 0 ? "disabled" : ""}>Add to bag</button>
+      <button class="primary-button product-add" type="button" data-add="${escapeAttribute(product.id)}">Add to bag</button>
       <a class="secondary-button product-checkout" href="checkout.html">Go to checkout</a>
     </div>
   `;
@@ -229,11 +229,11 @@ function productCards(entries) {
         <p class="notes">${escapeHtml(product.notes)}</p>
         <div class="product-meta">
           <span>${escapeHtml(product.size)}</span>
-          <span>${product.stock > 0 ? `${product.stock} in stock` : "Sold out"}</span>
+          <span>${escapeHtml(product.family || "Fragrance")}</span>
         </div>
         <div class="price-row">
           <span class="price">${currency.format(product.price)}</span>
-          <button class="primary-button" type="button" data-add="${escapeAttribute(product.id)}" ${product.stock <= 0 ? "disabled" : ""}>Add to bag</button>
+          <button class="primary-button" type="button" data-add="${escapeAttribute(product.id)}">Add to bag</button>
         </div>
       </div>
     </article>
@@ -260,11 +260,11 @@ function bindAddToBag(container) {
 
 function addToCart(productId) {
   const product = products.find((entry) => entry.id === productId);
-  if (!product || product.stock <= 0) return;
+  if (!product) return;
 
   const existing = cart.find((item) => item.id === productId);
   if (existing) {
-    existing.quantity = Math.min(existing.quantity + 1, product.stock);
+    existing.quantity += 1;
   } else {
     cart.push({ id: productId, quantity: 1 });
   }

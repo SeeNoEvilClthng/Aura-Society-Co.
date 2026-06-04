@@ -392,7 +392,7 @@ function renderProducts() {
       <div>
         <strong>${escapeHtml(product.name)}</strong>
         <p>${escapeHtml(product.brand)} | ${escapeHtml(product.collection || "No collection")} | $${Number(product.price).toFixed(2)}</p>
-        <p>${escapeHtml(product.family)} | ${product.stock} in stock | ${escapeHtml(product.size)}</p>
+        <p>${escapeHtml(product.family)} | ${escapeHtml(product.size)} | Stock tracked privately</p>
       </div>
       <div class="admin-actions">
         <button class="mini-button" type="button" data-edit="${escapeAttribute(product.id)}">Edit</button>

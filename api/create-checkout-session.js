@@ -123,9 +123,9 @@ async function readPayload(request) {
 function buildCheckoutItems(items, products) {
   return items.map((item) => {
     const product = products.find((entry) => entry.id === sanitize(item.id, 120));
-    if (!product || product.stock <= 0) return null;
+    if (!product) return null;
 
-    const quantity = Math.min(clampInteger(item.quantity, 1, 999999), product.stock);
+    const quantity = clampInteger(item.quantity, 1, 999999);
     const unitAmount = Math.round(Number(product.price) * 100);
     if (!product.name || !Number.isFinite(unitAmount) || unitAmount < 0) return null;
 
