@@ -3,12 +3,12 @@ let searchProducts = [];
 let searchReady = false;
 
 const searchOverlay = document.querySelector("#siteSearchOverlay");
-const searchInput = document.querySelector("#siteSearchInput");
+const siteSearchInput = document.querySelector("#siteSearchInput");
 const searchResults = document.querySelector("#siteSearchResults");
 const searchOpenButtons = document.querySelectorAll(".search-open");
 const searchCloseButton = document.querySelector(".site-search-close");
 
-if (searchOverlay && searchInput && searchResults) {
+if (searchOverlay && siteSearchInput && searchResults) {
   searchOpenButtons.forEach((button) => {
     button.addEventListener("click", openSiteSearch);
   });
@@ -16,8 +16,8 @@ if (searchOverlay && searchInput && searchResults) {
   searchOverlay.addEventListener("click", (event) => {
     if (event.target === searchOverlay) closeSiteSearch();
   });
-  searchInput.addEventListener("input", renderSearchResults);
-  searchInput.addEventListener("keydown", (event) => {
+  siteSearchInput.addEventListener("input", renderSearchResults);
+  siteSearchInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
       const firstResult = searchResults.querySelector("a");
       if (firstResult) {
@@ -38,7 +38,7 @@ async function openSiteSearch() {
   searchOverlay.classList.add("is-open");
   searchOverlay.setAttribute("aria-hidden", "false");
   document.body.classList.add("search-lock");
-  window.setTimeout(() => searchInput.focus(), 0);
+  window.setTimeout(() => siteSearchInput.focus(), 0);
 
   if (!searchReady) {
     searchResults.innerHTML = '<div class="site-search-empty">Loading fragrances...</div>';
@@ -84,7 +84,7 @@ async function requestSearchJson(url) {
 }
 
 function renderSearchResults() {
-  const query = searchInput.value.trim().toLowerCase();
+  const query = siteSearchInput.value.trim().toLowerCase();
   if (!query) {
     renderSearchEmptyState();
     return;
@@ -104,7 +104,7 @@ function renderSearchResults() {
   }).slice(0, 10);
 
   if (!matches.length) {
-    searchResults.innerHTML = `<div class="site-search-empty">No results for "${escapeSearchHtml(searchInput.value)}".</div>`;
+    searchResults.innerHTML = `<div class="site-search-empty">No results for "${escapeSearchHtml(siteSearchInput.value)}".</div>`;
     return;
   }
 
