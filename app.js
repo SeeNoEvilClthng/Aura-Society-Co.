@@ -178,7 +178,7 @@ function renderHeroPanels() {
 function renderFeaturedTiles() {
   const links = splitList(site.featuredLinks).slice(0, 4);
   featuredTiles.innerHTML = links.map((label, index) => {
-    const product = products.find((entry) => entry.collection === label) || products[index];
+    const product = matchingProducts(label)[0] || products[index];
     return `
       <a class="feature-tile" href="${escapeAttribute(collectionHref(label))}">
         ${productImage(product, "tile")}
@@ -190,7 +190,7 @@ function renderFeaturedTiles() {
 
 function renderPromoGrid() {
   promoGrid.innerHTML = site.promoCards.slice(0, 4).map((card, index) => {
-    const product = products.find((entry) => entry.collection === card.title) || products[index];
+    const product = matchingProducts(card.title)[0] || products[index];
     return `
       <a class="promo-card" href="${escapeAttribute(collectionHref(card.title))}">
         <div class="promo-media">${card.image ? `<img src="${escapeAttribute(card.image)}" alt="${escapeAttribute(card.title)}">` : productImage(product, "tile")}</div>
@@ -218,21 +218,21 @@ function renderFamilyTiles() {
 }
 
 function renderCollectionTabs() {
-  const collections = [...new Set(products.map((product) => product.collection).filter(Boolean))].sort();
-  if (activeCollection !== "all" && !collections.includes(activeCollection)) {
+  const collections = getCollectionLabels();
+  if (activeCollection !== "all" && !collections.some((collection) => sameCollection(collection, activeCollection))) {
     activeCollection = "all";
   }
 
   const tabs = ["all", ...collections];
   collectionTabs.innerHTML = tabs.map((collection) => {
     const isActive = collection === activeCollection;
-    const label = collection === "all" ? "All Collections" : collection;
+    const label = collection === "all" ? "All Products" : collection;
     const count = collection === "all"
       ? products.length
-      : products.filter((product) => product.collection === collection).length;
+      : matchingProducts(collection).length;
 
     return `
-      <a class="collection-tab ${isActive ? "is-active" : ""}" href="${escapeAttribute(collection === "all" ? "collections.html" : collectionHref(collection))}" aria-pressed="${isActive}">
+      <a class="collection-tab ${isActive ? "is-active" : ""}" href="${escapeAttribute(collection === "all" ? "index.html#shop" : collectionHref(collection))}" data-collection="${escapeAttribute(collection)}" aria-pressed="${isActive}">
         <span>${escapeHtml(label)}</span>
         <small>${count}</small>
       </a>
@@ -273,7 +273,7 @@ function filteredProducts() {
     const haystack = `${product.name} ${product.brand} ${product.collection || ""} ${product.notes} ${product.description}`.toLowerCase();
     const matchesSearch = !query || haystack.includes(query);
     const matchesFamily = family === "all" || product.family === family;
-    const matchesCollection = activeCollection === "all" || product.collection === activeCollection;
+    const matchesCollection = activeCollection === "all" || productMatchesCollection(product, activeCollection);
     return matchesSearch && matchesFamily && matchesCollection;
   });
 
@@ -425,6 +425,37 @@ function collectionHref(label) {
   return `collection.html?collection=${encodeURIComponent(label)}`;
 }
 
+function getCollectionLabels() {
+  return [
+    ...new Set(products.flatMap((product) => [
+      product.collection,
+      product.brand,
+      product.family
+    ]).filter(Boolean))
+  ].sort();
+}
+
+function matchingProducts(label) {
+  return products.filter((product) => productMatchesCollection(product, label));
+}
+
+function productMatchesCollection(product, label) {
+  const key = normalizeCollectionKey(label);
+  return [
+    product.collection,
+    product.brand,
+    product.family
+  ].some((value) => normalizeCollectionKey(value) === key);
+}
+
+function sameCollection(left, right) {
+  return normalizeCollectionKey(left) === normalizeCollectionKey(right);
+}
+
+function normalizeCollectionKey(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
 function escapeHtml(value) {
   return String(value || "")
     .replace(/&/g, "&amp;")
@@ -450,6 +481,7 @@ collectionTabs.addEventListener("click", (event) => {
   const button = event.target.closest("[data-collection]");
   if (!button) return;
 
+  event.preventDefault();
   activeCollection = button.dataset.collection;
   renderCollectionTabs();
   renderProducts();
