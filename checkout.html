@@ -13,6 +13,7 @@
         <a class="checkout-brand" href="index.html">
           <img src="assets/branding/aura-society-logo.png" alt="Aura Society Co.">
         </a>
+        <button class="checkout-search search-open" type="button" aria-haspopup="dialog" aria-controls="siteSearchOverlay">Search fragrances</button>
         <nav class="checkout-crumbs" aria-label="Checkout steps">
           <a href="index.html">Cart</a>
           <span>Information</span>
@@ -102,6 +103,20 @@
     </main>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="siteSearchOverlay" class="site-search-overlay" role="dialog" aria-modal="true" aria-labelledby="siteSearchTitle" aria-hidden="true">
+      <div class="site-search-panel">
+        <div class="site-search-head">
+          <h2 id="siteSearchTitle">Search Keyword</h2>
+          <button class="site-search-close" type="button" aria-label="Close search">Close</button>
+        </div>
+        <label class="site-search-field">
+          <span>Search</span>
+          <input id="siteSearchInput" type="search" placeholder="Search for a fragrance, note, collection">
+        </label>
+        <div id="siteSearchResults" class="site-search-results"></div>
+      </div>
+    </div>
     <script src="pages.js?v=page-routes-20260526"></script>
+    <script src="search.js?v=site-search-20260604"></script>
   </body>
 </html>
