@@ -74,7 +74,7 @@ async function readProducts() {
     const catalogProducts = readCatalogProducts();
     const mergedProducts = mergeCatalogProducts(products, catalogProducts);
 
-    if (mergedProducts.length !== products.length) {
+    if (productsChanged(products, mergedProducts)) {
       await writeSupabaseProducts(mergedProducts);
     }
 
@@ -90,7 +90,7 @@ async function readProducts() {
         const catalogProducts = readCatalogProducts();
         const mergedProducts = mergeCatalogProducts(normalizedProducts, catalogProducts);
 
-        if (mergedProducts.length !== normalizedProducts.length) {
+        if (productsChanged(normalizedProducts, mergedProducts)) {
           await kvCommand(["SET", PRODUCT_KEY, JSON.stringify(mergedProducts)]);
         }
 
@@ -196,7 +196,22 @@ function mergeCatalogProducts(products, catalogProducts) {
     return products;
   }
 
-  const existingKeys = new Set(products.map(getProductDuplicateKey));
+  const catalogByKey = new Map(catalogProducts.map((product) => [getProductDuplicateKey(product), product]));
+  const existingKeys = new Set();
+  const mergedProducts = products.map((product) => {
+    const key = getProductDuplicateKey(product);
+    existingKeys.add(key);
+
+    const catalogProduct = catalogByKey.get(key);
+    if (!catalogProduct) return product;
+
+    return {
+      ...product,
+      image: catalogProduct.image || product.image,
+      notes: catalogProduct.notes || product.notes,
+      description: catalogProduct.description || product.description
+    };
+  });
   const additions = catalogProducts.filter((product) => {
     const key = getProductDuplicateKey(product);
     if (!key || existingKeys.has(key)) return false;
@@ -204,7 +219,11 @@ function mergeCatalogProducts(products, catalogProducts) {
     return true;
   });
 
-  return additions.length ? dedupeProducts([...products, ...additions]) : products;
+  return dedupeProducts([...mergedProducts, ...additions]);
+}
+
+function productsChanged(left, right) {
+  return JSON.stringify(left) !== JSON.stringify(right);
 }
 
 function hasSupabaseConfig() {
