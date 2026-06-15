@@ -116,6 +116,7 @@ const promoEditor = document.querySelector("#promoEditor");
 const saveProductButton = document.querySelector("#saveProductButton");
 const resetButton = document.querySelector("#resetButton");
 const seedButton = document.querySelector("#seedButton");
+const syncCatalogButton = document.querySelector("#syncCatalogButton");
 const exportButton = document.querySelector("#exportButton");
 const toast = document.querySelector("#toast");
 
@@ -248,6 +249,25 @@ async function deleteProduct(product) {
   });
 
   products = Array.isArray(data.products) ? data.products : products;
+}
+
+async function syncPublishedCatalog() {
+  const catalog = await requestJson("/catalog/products.json");
+  const catalogProducts = Array.isArray(catalog) ? catalog : [];
+  const existingKeys = new Set(products.map(getProductDuplicateKey));
+  const additions = catalogProducts.filter((product) => {
+    const key = getProductDuplicateKey(product);
+    return key && !existingKeys.has(key);
+  });
+
+  if (!additions.length) {
+    return 0;
+  }
+
+  products = [...products, ...additions];
+  await saveProducts();
+  await loadProducts();
+  return additions.length;
 }
 
 async function saveSite() {
@@ -632,6 +652,23 @@ seedButton.addEventListener("click", async () => {
     showToast("Sample products restored.");
   } catch (error) {
     showToast(error.message);
+  }
+});
+
+syncCatalogButton.addEventListener("click", async () => {
+  syncCatalogButton.disabled = true;
+  syncCatalogButton.textContent = "Syncing...";
+
+  try {
+    const added = await syncPublishedCatalog();
+    clearForm();
+    refreshProductsUI();
+    showToast(added ? `Synced ${added} catalog product${added === 1 ? "" : "s"}.` : "Published catalog is already synced.");
+  } catch (error) {
+    showToast(error.message);
+  } finally {
+    syncCatalogButton.disabled = false;
+    syncCatalogButton.textContent = "Sync published catalog";
   }
 });
 
