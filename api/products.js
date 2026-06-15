@@ -71,11 +71,14 @@ module.exports = async function handler(request, response) {
 async function readProducts() {
   if (hasSupabaseConfig()) {
     const products = await readSupabaseProducts();
-    if (products.length) return products;
-
     const catalogProducts = readCatalogProducts();
-    await writeSupabaseProducts(catalogProducts);
-    return catalogProducts;
+    const mergedProducts = mergeCatalogProducts(products, catalogProducts);
+
+    if (mergedProducts.length !== products.length) {
+      await writeSupabaseProducts(mergedProducts);
+    }
+
+    return mergedProducts;
   }
 
   if (hasKvConfig()) {
@@ -83,7 +86,15 @@ async function readProducts() {
     if (stored) {
       try {
         const products = JSON.parse(stored);
-        return Array.isArray(products) ? products.map(normalizeProduct) : readCatalogProducts();
+        const normalizedProducts = Array.isArray(products) ? products.map(normalizeProduct) : [];
+        const catalogProducts = readCatalogProducts();
+        const mergedProducts = mergeCatalogProducts(normalizedProducts, catalogProducts);
+
+        if (mergedProducts.length !== normalizedProducts.length) {
+          await kvCommand(["SET", PRODUCT_KEY, JSON.stringify(mergedProducts)]);
+        }
+
+        return mergedProducts;
       } catch {
         return readCatalogProducts();
       }
@@ -178,6 +189,22 @@ function readCatalogProducts() {
   } catch {
     return [];
   }
+}
+
+function mergeCatalogProducts(products, catalogProducts) {
+  if (!catalogProducts.length) {
+    return products;
+  }
+
+  const existingKeys = new Set(products.map(getProductDuplicateKey));
+  const additions = catalogProducts.filter((product) => {
+    const key = getProductDuplicateKey(product);
+    if (!key || existingKeys.has(key)) return false;
+    existingKeys.add(key);
+    return true;
+  });
+
+  return additions.length ? dedupeProducts([...products, ...additions]) : products;
 }
 
 function hasSupabaseConfig() {
