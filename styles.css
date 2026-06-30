@@ -2393,3 +2393,507 @@ h3 {
     flex-direction: column;
   }
 }
+
+/* Device compatibility layer */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+input,
+select,
+textarea,
+button {
+  max-width: 100%;
+}
+
+.site-header,
+.retail-header,
+.retail-section,
+.brand-band,
+.support-band,
+.vip-footer,
+.page-hero,
+.product-detail,
+.checkout-main,
+.checkout-summary,
+.admin-shell,
+.site-editor,
+.admin-layout {
+  min-width: 0;
+}
+
+.retail-nav,
+.nav-actions,
+.collection-tabs,
+.payment-methods,
+.site-search-suggestions {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.retail-nav a,
+.nav-actions a,
+.collection-tab,
+.site-search-suggestions a {
+  white-space: nowrap;
+}
+
+.product-card,
+.retail-product-card,
+.promo-card,
+.feature-tile,
+.family-tile,
+.checkout-item,
+.admin-product,
+.site-search-result {
+  min-width: 0;
+}
+
+.product-info,
+.product-detail-copy,
+.checkout-item div,
+.admin-product div,
+.site-search-result div {
+  min-width: 0;
+}
+
+.product-info h3,
+.product-info p,
+.product-detail-copy h1,
+.admin-product strong,
+.admin-product p,
+.checkout-item strong,
+.checkout-item p,
+.site-search-result strong,
+.site-search-result span,
+.site-search-result small {
+  overflow-wrap: anywhere;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .primary-button,
+  .secondary-button,
+  .icon-button,
+  .header-search,
+  .header-checkout,
+  .collection-tab,
+  .site-search-close,
+  .checkout-search,
+  .checkout-continue,
+  .express-buttons button,
+  .discount-row button {
+    min-height: 48px;
+  }
+
+  .feature-tile:hover img,
+  .feature-tile:hover .product-placeholder,
+  .family-tile:hover img,
+  .family-tile:hover .product-placeholder,
+  .promo-card:hover .promo-media img,
+  .promo-card:hover .promo-media .product-placeholder,
+  .retail-product-card:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 1180px) {
+  .site-header:not(.retail-header) {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .site-header:not(.retail-header) .nav-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .featured-tiles,
+  .promo-grid,
+  .family-tiles {
+    grid-template-columns: repeat(3, minmax(210px, 1fr));
+  }
+
+  .checkout-shell {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.78fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .retail-header {
+    gap: 12px;
+  }
+
+  .retail-header .brand-logo {
+    width: 132px;
+    height: 62px;
+  }
+
+  .retail-nav,
+  .collection-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .header-tools {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    width: 100%;
+  }
+
+  .header-search {
+    width: 100%;
+  }
+
+  .featured-tiles,
+  .promo-grid,
+  .family-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow-x: visible;
+  }
+
+  .promo-card {
+    min-width: 0;
+  }
+
+  .support-band,
+  .vip-footer {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .product-detail-media {
+    min-height: min(62vh, 560px);
+  }
+}
+
+@media (max-width: 640px) {
+  .top-banner {
+    justify-content: center;
+    min-height: 38px;
+    padding: 8px 14px;
+    font-size: 0.78rem;
+    text-align: center;
+  }
+
+  .site-header,
+  .retail-header {
+    position: relative;
+    min-height: auto;
+    padding: 10px max(14px, env(safe-area-inset-right)) 10px max(14px, env(safe-area-inset-left));
+  }
+
+  .brand-logo,
+  .retail-header .brand-logo {
+    width: 116px;
+    height: 54px;
+  }
+
+  .nav-actions {
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .header-tools {
+    grid-template-columns: 1fr auto;
+  }
+
+  .header-search {
+    grid-column: 1 / -1;
+    min-height: 48px;
+  }
+
+  .header-search strong {
+    white-space: normal;
+  }
+
+  .account-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .drop-hero,
+  .hero-overlay {
+    min-height: 74vh;
+  }
+
+  .hero-overlay {
+    align-content: center;
+    padding: 74px 16px 42px;
+  }
+
+  .hero-mark {
+    width: min(280px, 82vw);
+    max-height: 132px;
+  }
+
+  .drop-hero h1,
+  .page-hero h1,
+  .product-detail-copy h1 {
+    font-size: clamp(2.45rem, 15vw, 4.4rem);
+    line-height: 0.95;
+  }
+
+  .drop-hero p:not(.hero-kicker),
+  .page-hero p:not(.hero-kicker) {
+    font-size: 0.98rem;
+  }
+
+  .retail-section,
+  .brand-band,
+  .support-band,
+  .vip-footer,
+  .product-detail,
+  .page-hero,
+  .checkout-main,
+  .checkout-summary {
+    padding-left: max(14px, env(safe-area-inset-left));
+    padding-right: max(14px, env(safe-area-inset-right));
+  }
+
+  .retail-section-head h2,
+  .brand-band h2,
+  .support-band h2,
+  .vip-footer h2,
+  .site-search-head h2 {
+    font-size: clamp(2rem, 12vw, 3.4rem);
+    line-height: 0.96;
+  }
+
+  .shop-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .control-input,
+  .checkout-input {
+    font-size: 16px;
+  }
+
+  .featured-tiles,
+  .promo-grid,
+  .family-tiles,
+  .retail-product-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .feature-tile,
+  .family-tile,
+  .promo-card {
+    min-width: 0;
+  }
+
+  .promo-card {
+    min-height: 360px;
+  }
+
+  .retail-product-card h3 {
+    min-height: 0;
+  }
+
+  .product-detail-media {
+    min-height: auto;
+    aspect-ratio: 1 / 1.18;
+  }
+
+  .payment-methods {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .cart-panel {
+    width: 100vw;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .site-search-panel {
+    min-height: 100dvh;
+    padding: 18px max(14px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+  }
+
+  .site-search-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .site-search-close {
+    width: 100%;
+  }
+
+  .site-search-field input {
+    min-height: 58px;
+    font-size: 1.45rem;
+  }
+
+  .site-search-result {
+    grid-template-columns: 68px minmax(0, 1fr);
+  }
+
+  .site-search-result b {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .site-search-thumb {
+    width: 68px;
+    height: 68px;
+  }
+
+  .checkout-brand img {
+    width: 150px;
+    height: 68px;
+  }
+
+  .checkout-crumbs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+  }
+
+  .express-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .checkout-section-head,
+  .checkout-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .checkout-continue,
+  .checkout-actions a {
+    width: 100%;
+    text-align: center;
+  }
+
+  .checkout-item {
+    grid-template-columns: 58px minmax(0, 1fr);
+  }
+
+  .checkout-item > strong,
+  .checkout-item > b {
+    grid-column: 2;
+  }
+
+  .checkout-thumb {
+    width: 58px;
+    height: 58px;
+  }
+
+  .checkout-quantity {
+    left: 46px;
+  }
+
+  .discount-row,
+  .shipping-choice label {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-lines p {
+    align-items: flex-start;
+  }
+
+  .vip-form .primary-button {
+    width: 100%;
+  }
+
+  .footer-links {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-product {
+    align-items: start;
+  }
+
+  .admin-product .admin-actions {
+    grid-column: 1 / -1;
+    justify-content: stretch;
+  }
+
+  .admin-product .admin-actions .mini-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .top-banner,
+  .retail-nav,
+  .nav-actions,
+  .account-link,
+  .header-search,
+  .primary-button,
+  .secondary-button,
+  .collection-tab,
+  .checkout-input {
+    font-size: 0.86rem;
+  }
+
+  .retail-section,
+  .brand-band,
+  .support-band,
+  .vip-footer,
+  .product-detail,
+  .page-hero,
+  .checkout-main,
+  .checkout-summary {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .brand-logo,
+  .retail-header .brand-logo {
+    width: 104px;
+    height: 50px;
+  }
+
+  .drop-hero h1,
+  .page-hero h1,
+  .product-detail-copy h1 {
+    font-size: 2.3rem;
+  }
+
+  .promo-copy h3 {
+    font-size: 1.75rem;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .drop-hero,
+  .hero-overlay {
+    min-height: 100dvh;
+  }
+
+  .hero-overlay {
+    padding-top: 36px;
+    padding-bottom: 30px;
+  }
+
+  .hero-mark {
+    display: none;
+  }
+
+  .drop-hero h1 {
+    font-size: clamp(2.4rem, 8vw, 5rem);
+  }
+}
