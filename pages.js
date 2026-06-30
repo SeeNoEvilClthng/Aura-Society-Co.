@@ -4,6 +4,7 @@ const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "
 
 let products = [];
 let cart = loadCart();
+let productImagesHydrated = false;
 
 const toast = document.querySelector("#toast");
 const cartCount = document.querySelector("#cartCount");
@@ -18,6 +19,7 @@ async function initPage() {
     if (page === "collection") renderCollectionPage();
     if (page === "product") renderProductPage();
     if (page === "checkout") renderCheckoutPage();
+    hydrateProductImages();
   } catch (error) {
     showToast(error.message);
   }
@@ -25,12 +27,54 @@ async function initPage() {
 
 async function fetchProducts() {
   try {
-    const data = await requestJson(`${API_BASE}/api/products`);
+    const data = await requestJson(`${API_BASE}/api/products?images=0`);
     return Array.isArray(data.products) ? data.products : [];
   } catch {
-    const fallback = await requestJson("/catalog/products.json");
+    const fallback = await requestJson("/catalog/products-lite.json");
     return Array.isArray(fallback) ? fallback : [];
   }
+}
+
+async function hydrateProductImages() {
+  if (productImagesHydrated) return;
+  productImagesHydrated = true;
+
+  try {
+    const data = await requestJson(`${API_BASE}/api/products?images=1`);
+    const fullProducts = Array.isArray(data.products) ? data.products : [];
+    if (!mergeProductImages(fullProducts)) return;
+
+    rerenderCurrentPage();
+  } catch {
+    try {
+      const fullProducts = await requestJson("/catalog/products.json");
+      if (!mergeProductImages(Array.isArray(fullProducts) ? fullProducts : [])) return;
+
+      rerenderCurrentPage();
+    } catch {
+      productImagesHydrated = false;
+    }
+  }
+}
+
+function mergeProductImages(fullProducts) {
+  const imagesById = new Map(fullProducts.filter((product) => product.image).map((product) => [product.id, product.image]));
+  let changed = false;
+  products = products.map((product) => {
+    const image = imagesById.get(product.id);
+    if (!image || product.image === image) return product;
+    changed = true;
+    return { ...product, image };
+  });
+  return changed;
+}
+
+function rerenderCurrentPage() {
+  const page = document.body.dataset.page;
+  if (page === "collections") renderCollectionsPage();
+  if (page === "collection") renderCollectionPage();
+  if (page === "product") renderProductPage();
+  if (page === "checkout") renderCheckoutPage();
 }
 
 async function requestJson(url, options) {
@@ -262,7 +306,9 @@ function productCards(entries) {
 
 function productImage(product, variant = "card") {
   if (product?.image) {
-    return `<img src="${escapeAttribute(product.image)}" alt="${escapeAttribute(product.name)} fragrance">`;
+    const loading = variant === "hero" ? "eager" : "lazy";
+    const fetchPriority = variant === "hero" ? "high" : "auto";
+    return `<img src="${escapeAttribute(product.image)}" alt="${escapeAttribute(product.name)} fragrance" loading="${loading}" decoding="async" fetchpriority="${fetchPriority}">`;
   }
 
   const label = product?.name?.charAt(0) || "A";
@@ -270,6 +316,9 @@ function productImage(product, variant = "card") {
 }
 
 function bindAddToBag(container) {
+  if (container.dataset.addToBagBound === "true") return;
+  container.dataset.addToBagBound = "true";
+
   container.addEventListener("click", (event) => {
     const button = event.target.closest("[data-add]");
     if (!button) return;

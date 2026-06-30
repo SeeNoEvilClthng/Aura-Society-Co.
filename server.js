@@ -141,7 +141,8 @@ async function handleProducts(request, response) {
   const requestUrl = new URL(request.url, SITE_URL);
 
   if (request.method === "GET" || request.method === "HEAD") {
-    sendJson(response, 200, { products: readProducts() });
+    const products = readProducts();
+    sendJson(response, 200, { products: shouldIncludeImages(requestUrl) ? products : stripProductImages(products) });
     return;
   }
 
@@ -489,6 +490,14 @@ function normalizePromoCards(cards) {
       image: sanitize(card.image || fallback.image, 10_000_000)
     };
   });
+}
+
+function shouldIncludeImages(requestUrl) {
+  return requestUrl.searchParams.get("images") !== "0";
+}
+
+function stripProductImages(products) {
+  return products.map(({ image, ...product }) => product);
 }
 
 function dedupeProducts(products) {

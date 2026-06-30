@@ -16,7 +16,9 @@ module.exports = async function handler(request, response) {
 
   try {
     if (request.method === "GET" || request.method === "HEAD") {
-      sendJson(response, 200, { products: await readProducts() });
+      const requestUrl = new URL(request.url, "http://localhost");
+      const products = await readProducts();
+      sendJson(response, 200, { products: shouldIncludeImages(requestUrl) ? products : stripProductImages(products) });
       return;
     }
 
@@ -189,6 +191,14 @@ function readCatalogProducts() {
   } catch {
     return [];
   }
+}
+
+function shouldIncludeImages(requestUrl) {
+  return requestUrl.searchParams.get("images") !== "0";
+}
+
+function stripProductImages(products) {
+  return products.map(({ image, ...product }) => product);
 }
 
 function mergeCatalogProducts(products, catalogProducts) {

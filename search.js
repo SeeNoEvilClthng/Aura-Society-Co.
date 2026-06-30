@@ -1,6 +1,7 @@
 const SEARCH_API_BASE = getSearchApiBase();
 let searchProducts = [];
 let searchReady = false;
+let searchImagesHydrated = false;
 
 const searchOverlay = document.querySelector("#siteSearchOverlay");
 const siteSearchInput = document.querySelector("#siteSearchInput");
@@ -46,6 +47,7 @@ async function openSiteSearch() {
       searchProducts = await fetchSearchProducts();
       searchReady = true;
       renderSearchResults();
+      hydrateSearchImages();
     } catch (error) {
       searchResults.innerHTML = `<div class="site-search-empty">${escapeSearchHtml(error.message)}</div>`;
     }
@@ -60,12 +62,44 @@ function closeSiteSearch() {
 
 async function fetchSearchProducts() {
   try {
-    const data = await requestSearchJson(`${SEARCH_API_BASE}/api/products`);
+    const data = await requestSearchJson(`${SEARCH_API_BASE}/api/products?images=0`);
     return Array.isArray(data.products) ? data.products : [];
   } catch {
-    const fallback = await requestSearchJson("/catalog/products.json");
+    const fallback = await requestSearchJson("/catalog/products-lite.json");
     return Array.isArray(fallback) ? fallback : [];
   }
+}
+
+async function hydrateSearchImages() {
+  if (searchImagesHydrated) return;
+  searchImagesHydrated = true;
+
+  try {
+    const data = await requestSearchJson(`${SEARCH_API_BASE}/api/products?images=1`);
+    const fullProducts = Array.isArray(data.products) ? data.products : [];
+    if (!mergeSearchImages(fullProducts)) return;
+    renderSearchResults();
+  } catch {
+    try {
+      const fullProducts = await requestSearchJson("/catalog/products.json");
+      if (!mergeSearchImages(Array.isArray(fullProducts) ? fullProducts : [])) return;
+      renderSearchResults();
+    } catch {
+      searchImagesHydrated = false;
+    }
+  }
+}
+
+function mergeSearchImages(fullProducts) {
+  const imagesById = new Map(fullProducts.filter((product) => product.image).map((product) => [product.id, product.image]));
+  let changed = false;
+  searchProducts = searchProducts.map((product) => {
+    const image = imagesById.get(product.id);
+    if (!image || product.image === image) return product;
+    changed = true;
+    return { ...product, image };
+  });
+  return changed;
 }
 
 async function requestSearchJson(url) {
@@ -136,7 +170,7 @@ function renderSearchEmptyState() {
 
 function searchProductImage(product) {
   if (product?.image) {
-    return `<img src="${escapeSearchAttribute(product.image)}" alt="${escapeSearchAttribute(product.name)}">`;
+    return `<img src="${escapeSearchAttribute(product.image)}" alt="${escapeSearchAttribute(product.name)}" loading="lazy" decoding="async">`;
   }
 
   return `<span>${escapeSearchHtml(product?.name?.charAt(0) || "A")}</span>`;
