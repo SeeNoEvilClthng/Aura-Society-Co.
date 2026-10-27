@@ -39,6 +39,8 @@ Use the repository root as the Vercel project root. Leave the framework preset a
 
 Add these environment variables in Vercel Project Settings:
 
+- `WELCOME_PROMO_CODE` (optional): A Stripe promotion code (Stripe Dashboard > Products > Coupons) shown to shoppers right after they join the VIP list. `WELCOME_OFFER_TEXT` sets the sentence shown with it. Subscribers are saved to the same Supabase table and can be downloaded as CSV from the admin portal.
+- Google Shopping: submit `https://your-domain.com/feed.xml` as a scheduled product feed in Google Merchant Center for free product listings.
 - `ADMIN_USERNAME` and `ADMIN_PASSWORD`: Admin portal login. The server checks these on every product or homepage change; without them, saving is disabled. Use a long password you don't use anywhere else.
 
 - `STRIPE_SECRET_KEY`: Stripe secret key. Use `sk_test_...` first, then switch to live when ready.

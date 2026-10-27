@@ -1,7 +1,7 @@
 const { readProducts, readCatalogProducts } = require("./products");
-const { getSiteUrl, renderSitemap, renderRobots, decodeProductImage } = require("../lib/seo");
+const { getSiteUrl, renderSitemap, renderProductFeed, renderRobots, decodeProductImage } = require("../lib/seo");
 
-// Serves /sitemap.xml, /robots.txt, and /images/products/:id (see vercel.json rewrites).
+// Serves /sitemap.xml, /robots.txt, /feed.xml, and /images/products/:id (see vercel.json rewrites).
 module.exports = async function handler(request, response) {
   const query = getQuery(request);
   const siteUrl = getSiteUrl(request);
@@ -20,6 +20,11 @@ module.exports = async function handler(request, response) {
 
   if (query.file === "sitemap") {
     send(response, 200, "application/xml; charset=utf-8", renderSitemap(products, siteUrl), 3600);
+    return;
+  }
+
+  if (query.file === "feed") {
+    send(response, 200, "application/xml; charset=utf-8", renderProductFeed(products, siteUrl), 3600);
     return;
   }
 

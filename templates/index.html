@@ -117,10 +117,13 @@
         <div>
           <h2 id="vipTitle">Become a VIP</h2>
           <p id="vipText">Subscribe to get early access to drops, exclusive offers, and fragrance restocks.</p>
-          <form class="vip-form">
-            <input class="input" type="email" placeholder="Email address" aria-label="Email address">
-            <input class="input" type="tel" placeholder="Phone optional" aria-label="Phone optional">
-            <button class="primary-button" type="button">Sign up</button>
+          <form id="vipForm" class="vip-form" novalidate>
+            <input class="input" name="email" type="email" placeholder="Email address" aria-label="Email address" autocomplete="email" required>
+            <input class="input" name="phone" type="tel" placeholder="Phone optional" aria-label="Phone optional" autocomplete="tel">
+            <input class="vip-trap" name="website" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <button class="primary-button" type="submit">Sign up</button>
+            <p class="vip-consent">By signing up you agree to receive marketing emails and, if you add a phone number, texts from Aura Society Co. Msg &amp; data rates may apply. Unsubscribe anytime.</p>
+            <p id="vipMessage" class="vip-message" role="status" aria-live="polite"></p>
           </form>
         </div>
         <div class="footer-links">
@@ -158,6 +161,7 @@
         <div id="cartItems" class="cart-items"></div>
         <div class="cart-empty" id="cartEmpty">Your bag is empty.</div>
         <div class="cart-footer">
+          <div id="shippingProgress" class="shipping-progress" aria-live="polite"></div>
           <div class="cart-total">
             <span>Total</span>
             <strong id="cartTotal">$0.00</strong>

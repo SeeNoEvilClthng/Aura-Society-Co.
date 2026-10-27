@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const seo = require("./lib/seo");
 const { requireAdmin } = require("./lib/admin-auth");
+const subscribeHandler = require("./api/subscribe");
 
 loadEnv();
 
@@ -112,6 +113,11 @@ const server = http.createServer(async (request, response) => {
 
     if (requestUrl.pathname === "/api/admin-session") {
       if (await requireAdmin(request, sendAuthError)) sendJson(response, 200, { ok: true });
+      return;
+    }
+
+    if (requestUrl.pathname === "/api/subscribe") {
+      await subscribeHandler(request, response);
       return;
     }
 
@@ -345,6 +351,11 @@ function serveSeoRoute(request, response, requestUrl) {
 
   if (requestUrl.pathname === "/sitemap.xml") {
     send(200, "application/xml; charset=utf-8", seo.renderSitemap(readProducts(), siteUrl));
+    return true;
+  }
+
+  if (requestUrl.pathname === "/feed.xml") {
+    send(200, "application/xml; charset=utf-8", seo.renderProductFeed(readProducts(), siteUrl));
     return true;
   }
 

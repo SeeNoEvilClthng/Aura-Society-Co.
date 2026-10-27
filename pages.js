@@ -1,4 +1,5 @@
 const CART_KEY = "auraSocietyCart";
+const FREE_SHIPPING_THRESHOLD = 100;
 const API_BASE = getApiBase();
 const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
@@ -227,6 +228,7 @@ function renderCheckoutPage() {
   standardShippingName.textContent = isFreeShipping ? "Free standard shipping" : "Standard shipping";
   standardShippingPrice.textContent = isFreeShipping ? "Free" : "$10.00";
   subtotalEl.textContent = currency.format(subtotal);
+  renderShippingProgress(document.querySelector("#shippingProgress"), subtotal);
   updateCheckoutTotals();
   document.querySelectorAll("input[name='shippingMethod']").forEach((input) => {
     input.addEventListener("input", updateCheckoutTotals);
@@ -283,6 +285,25 @@ function renderCheckoutPage() {
       showToast(error.message);
     }
   });
+}
+
+function renderShippingProgress(container, subtotal) {
+  if (!container) return;
+  if (subtotal <= 0) {
+    container.innerHTML = "";
+    return;
+  }
+
+  const remaining = Math.max(FREE_SHIPPING_THRESHOLD - subtotal, 0);
+  const percent = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
+  const message = remaining > 0
+    ? `Add <strong>${currency.format(remaining)}</strong> more for free standard shipping. <a href="collections.html">Keep shopping</a>`
+    : "<strong>You've unlocked free standard shipping</strong>";
+
+  container.innerHTML = `
+    <p>${message}</p>
+    <div class="shipping-progress-track"><span style="width: ${percent.toFixed(1)}%"></span></div>
+  `;
 }
 
 function productCards(entries) {

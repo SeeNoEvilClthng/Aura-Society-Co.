@@ -1,4 +1,5 @@
 const CART_KEY = "auraSocietyCart";
+const FREE_SHIPPING_THRESHOLD = 100;
 
 const currency = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -65,6 +66,9 @@ const cartTotal = document.querySelector("#cartTotal");
 const cartEmpty = document.querySelector("#cartEmpty");
 const checkoutForm = document.querySelector("#checkoutForm");
 const checkoutButton = document.querySelector("#checkoutButton");
+const shippingProgress = document.querySelector("#shippingProgress");
+const vipForm = document.querySelector("#vipForm");
+const vipMessage = document.querySelector("#vipMessage");
 const toast = document.querySelector("#toast");
 
 function loadCart() {
@@ -370,6 +374,7 @@ function renderCart() {
 
   cartCount.textContent = quantity;
   cartTotal.textContent = currency.format(total);
+  renderShippingProgress(shippingProgress, total);
 
   const activeItems = cart
     .map((item) => ({ ...item, product: products.find((product) => product.id === item.id) }))
@@ -392,6 +397,25 @@ function renderCart() {
       </div>
     </div>
   `).join("");
+}
+
+function renderShippingProgress(container, subtotal) {
+  if (!container) return;
+  if (subtotal <= 0) {
+    container.innerHTML = "";
+    return;
+  }
+
+  const remaining = Math.max(FREE_SHIPPING_THRESHOLD - subtotal, 0);
+  const percent = Math.min((subtotal / FREE_SHIPPING_THRESHOLD) * 100, 100);
+  const message = remaining > 0
+    ? `You're <strong>${currency.format(remaining)}</strong> away from free shipping`
+    : "<strong>You've unlocked free standard shipping</strong>";
+
+  container.innerHTML = `
+    <p>${message}</p>
+    <div class="shipping-progress-track"><span style="width: ${percent.toFixed(1)}%"></span></div>
+  `;
 }
 
 function addToCart(productId) {
@@ -551,6 +575,43 @@ checkoutForm.addEventListener("submit", async (event) => {
   }
 
   window.location.href = "checkout.html";
+});
+
+vipForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = vipForm.querySelector("button[type='submit']");
+  const formData = new FormData(vipForm);
+  const email = String(formData.get("email") || "").trim();
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    vipMessage.textContent = "Enter a valid email address.";
+    return;
+  }
+
+  button.disabled = true;
+  vipMessage.textContent = "Signing you up...";
+
+  try {
+    const data = await requestJson(`${API_BASE}/api/subscribe`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        phone: formData.get("phone"),
+        website: formData.get("website"),
+        source: "homepage-footer"
+      })
+    });
+
+    vipForm.reset();
+    vipMessage.innerHTML = data.offer
+      ? `You're in. Your code: <strong class="vip-code">${escapeHtml(data.offer.code)}</strong> ${escapeHtml(data.offer.text)}`
+      : "You're on the VIP list. Watch your inbox for early drops.";
+  } catch (error) {
+    vipMessage.textContent = error instanceof TypeError ? "Signup failed. Check your connection and try again." : error.message;
+  } finally {
+    button.disabled = false;
+  }
 });
 
 function getApiBase() {

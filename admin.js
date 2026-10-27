@@ -116,7 +116,12 @@ const resetButton = document.querySelector("#resetButton");
 const seedButton = document.querySelector("#seedButton");
 const syncCatalogButton = document.querySelector("#syncCatalogButton");
 const exportButton = document.querySelector("#exportButton");
+const loadSubscribersButton = document.querySelector("#loadSubscribersButton");
+const downloadSubscribersButton = document.querySelector("#downloadSubscribersButton");
+const subscriberSummary = document.querySelector("#subscriberSummary");
+const subscriberList = document.querySelector("#subscriberList");
 const toast = document.querySelector("#toast");
+let subscribers = [];
 
 // The server checks the username/password on every change; the browser only keeps
 // them for this tab so the admin does not have to re-enter them for each save.
@@ -712,6 +717,47 @@ syncCatalogButton.addEventListener("click", async () => {
     syncCatalogButton.disabled = false;
     syncCatalogButton.textContent = "Sync published catalog";
   }
+});
+
+loadSubscribersButton.addEventListener("click", async () => {
+  loadSubscribersButton.disabled = true;
+  loadSubscribersButton.textContent = "Loading...";
+
+  try {
+    const data = await requestJson("/api/subscribe");
+    subscribers = Array.isArray(data.subscribers) ? data.subscribers : [];
+    const withPhone = subscribers.filter((entry) => entry.phone).length;
+    subscriberSummary.textContent = `${subscribers.length} subscriber${subscribers.length === 1 ? "" : "s"}, ${withPhone} with a phone number.`;
+    subscriberList.innerHTML = subscribers.length
+      ? subscribers.slice(0, 50).map((entry) => `
+        <article class="admin-product">
+          <div>
+            <strong>${escapeHtml(entry.email)}</strong>
+            <p>${escapeHtml(entry.phone || "No phone")} | ${escapeHtml(new Date(entry.createdAt).toLocaleDateString())}</p>
+          </div>
+        </article>
+      `).join("") + (subscribers.length > 50 ? '<p class="microcopy">Showing the newest 50. Download the CSV for everyone.</p>' : "")
+      : '<div class="empty-state">No signups yet.</div>';
+    downloadSubscribersButton.disabled = !subscribers.length;
+  } catch (error) {
+    showToast(error.message);
+  } finally {
+    loadSubscribersButton.disabled = false;
+    loadSubscribersButton.textContent = "Load subscribers";
+  }
+});
+
+downloadSubscribersButton.addEventListener("click", () => {
+  // Prefix values starting with = + - @ so spreadsheet apps don't run them as formulas.
+  const csvCell = (value) => `"${String(value || "").replace(/^[=+\-@]/, "'$&").replace(/"/g, '""')}"`;
+  const rows = [["email", "phone", "source", "signed_up"], ...subscribers.map((entry) => [entry.email, entry.phone, entry.source, entry.createdAt])];
+  const blob = new Blob([rows.map((row) => row.map(csvCell).join(",")).join("\n")], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "aura-society-vip-subscribers.csv";
+  link.click();
+  URL.revokeObjectURL(url);
 });
 
 exportButton.addEventListener("click", () => {

@@ -1212,6 +1212,64 @@ h3 {
   text-transform: uppercase;
 }
 
+.shipping-progress p {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+}
+
+.shipping-progress a {
+  color: inherit;
+  font-weight: 800;
+}
+
+.shipping-progress-track {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e2e2e2;
+}
+
+.shipping-progress-track span {
+  display: block;
+  height: 100%;
+  background: #050505;
+  transition: width 0.3s ease;
+}
+
+.vip-trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.vip-footer .vip-consent {
+  margin: 14px 0 0;
+  color: #9a9a9a;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: left;
+  text-transform: none;
+}
+
+.vip-footer .vip-message {
+  min-height: 1.4em;
+  margin: 10px 0 0;
+  color: #ffffff;
+  font-weight: 600;
+  text-align: left;
+  text-transform: none;
+}
+
+.vip-code {
+  padding: 2px 8px;
+  background: #ffffff;
+  color: #050505;
+  letter-spacing: 0.08em;
+}
+
 .trust-list {
   display: grid;
   gap: 6px;

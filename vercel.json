@@ -10,6 +10,7 @@
     { "source": "/product.html", "destination": "/api/page?page=product" },
     { "source": "/sitemap.xml", "destination": "/api/seo?file=sitemap" },
     { "source": "/robots.txt", "destination": "/api/seo?file=robots" },
+    { "source": "/feed.xml", "destination": "/api/seo?file=feed" },
     { "source": "/images/products/:id", "destination": "/api/seo?file=image&id=:id" }
   ]
 }
