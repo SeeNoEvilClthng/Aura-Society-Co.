@@ -292,9 +292,16 @@ function renderCheckoutPage() {
   standardShippingPrice.textContent = isFreeShipping ? "Free" : "$10.00";
   subtotalEl.textContent = currency.format(subtotal);
   renderShippingProgress(document.querySelector("#shippingProgress"), subtotal);
+  renderFreeShippingPairings(document.querySelector("#checkoutPairings"), activeItems, subtotal);
   updateCheckoutTotals();
+
+  // This page re-renders when images, reviews or the bag change; bind listeners once so a
+  // single click can't open two payment sessions.
+  if (checkoutForm.dataset.bound === "true") return;
+  checkoutForm.dataset.bound = "true";
+
   document.querySelectorAll("input[name='shippingMethod']").forEach((input) => {
-    input.addEventListener("input", updateCheckoutTotals);
+    input.addEventListener("input", renderCheckoutPage);
   });
 
   checkoutForm.addEventListener("submit", async (event) => {
@@ -317,6 +324,16 @@ function renderCheckoutPage() {
 
     checkoutButton.disabled = true;
     checkoutButton.textContent = "Opening payment...";
+
+    if (formData.get("marketing")) {
+      // Opt-in from the checkbox; a failed signup must never hold up payment.
+      fetch(`${API_BASE}/api/subscribe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.get("email"), source: "checkout" }),
+        keepalive: true
+      }).catch(() => {});
+    }
 
     try {
       const data = await requestJson(`${API_BASE}/api/create-checkout-session`, {
@@ -367,6 +384,44 @@ function renderShippingProgress(container, subtotal) {
     <p>${message}</p>
     <div class="shipping-progress-track"><span style="width: ${percent.toFixed(1)}%"></span></div>
   `;
+}
+
+// Most bottles sit just under the free-shipping line, so suggest a second one that clears
+// it: same scent family as the bag first, then the lowest price that gets there.
+function freeShippingPairings(activeItems, subtotal, limit = 3) {
+  const remaining = FREE_SHIPPING_THRESHOLD - subtotal;
+  if (subtotal <= 0 || remaining <= 0) return [];
+
+  const inBag = new Set(activeItems.map((item) => item.product.id));
+  const families = new Set(activeItems.map((item) => item.product.family).filter(Boolean));
+  return products
+    .filter((product) => !inBag.has(product.id) && product.price >= remaining && product.stock !== 0)
+    .sort((a, b) => (families.has(b.family) - families.has(a.family)) || (a.price - b.price))
+    .slice(0, limit);
+}
+
+function renderFreeShippingPairings(container, activeItems, subtotal) {
+  if (!container) return;
+  const pairings = freeShippingPairings(activeItems, subtotal);
+  if (!pairings.length) {
+    container.innerHTML = "";
+    return;
+  }
+
+  container.innerHTML = `
+    <p class="pairings-title">Pair it and ship free</p>
+    ${pairings.map((product) => `
+      <div class="pairing-item">
+        <a class="pairing-thumb" href="product.html?id=${encodeURIComponent(product.id)}">${productImage(product)}</a>
+        <div>
+          <a href="product.html?id=${encodeURIComponent(product.id)}"><strong>${escapeHtml(product.name)}</strong></a>
+          <p class="microcopy">${currency.format(product.price)} | ${escapeHtml(product.family || product.size)}</p>
+        </div>
+        <button class="secondary-button" type="button" data-add="${escapeAttribute(product.id)}">Add</button>
+      </div>
+    `).join("")}
+  `;
+  bindAddToBag(container);
 }
 
 function productCards(entries) {
@@ -429,6 +484,7 @@ function addToCart(productId) {
 
   saveCart();
   updateCartCount();
+  if (document.body.dataset.page === "checkout") renderCheckoutPage();
   showToast(`${product.name} added to bag.`);
 }
 

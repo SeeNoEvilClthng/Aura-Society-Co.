@@ -6,7 +6,7 @@
     <title>Checkout | Aura Society Co.</title>
     <meta name="description" content="Aura Society Co. checkout page.">
     <meta name="robots" content="noindex">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=20261026">
   </head>
   <body data-page="checkout" class="checkout-page">
     <main class="checkout-shell">
@@ -22,19 +22,17 @@
           <span>Payment</span>
         </nav>
 
-        <div class="express-box">
-          <p>Stripe secure checkout supports eligible major payment methods</p>
-          <div class="express-buttons">
-            <button class="shop-pay" type="button">Cards</button>
-            <button class="paypal-pay" type="button">PayPal</button>
-            <button class="cash-pay" type="button">Cash App Pay</button>
-            <button class="google-pay" type="button">Apple Pay</button>
-            <button class="google-pay" type="button">Google Pay</button>
-            <button class="link-pay" type="button">Link</button>
-          </div>
+        <div class="accepted-payments">
+          <p>Secure payment by Stripe. Choose your payment method on the next step.</p>
+          <ul aria-label="Payment methods offered where eligible">
+            <li>Cards</li>
+            <li>Apple Pay</li>
+            <li>Google Pay</li>
+            <li>PayPal</li>
+            <li>Cash App Pay</li>
+            <li>Link</li>
+          </ul>
         </div>
-
-        <div class="checkout-divider"><span>OR</span></div>
 
         <form id="checkoutForm" class="shopify-checkout-form">
           <div class="checkout-section-head">
@@ -72,10 +70,8 @@
 
       <aside class="checkout-summary">
         <div id="checkoutItems" class="checkout-items"></div>
-        <div class="discount-row">
-          <input class="checkout-input" placeholder="Gift card or discount code">
-          <button type="button">Apply</button>
-        </div>
+        <div id="checkoutPairings" class="pairings" aria-live="polite"></div>
+        <p class="discount-note">Have a discount or VIP code? You'll enter it on the secure payment page.</p>
         <div class="summary-lines">
           <div id="shippingProgress" class="shipping-progress" aria-live="polite"></div>
           <p><span>Subtotal</span><strong id="checkoutSubtotal">$0.00</strong></p>
@@ -117,7 +113,7 @@
         <div id="siteSearchResults" class="site-search-results"></div>
       </div>
     </div>
-    <script src="pages.js?v=fast-products-20260630"></script>
+    <script src="pages.js?v=pairings-20261026"></script>
     <script src="search.js?v=fast-products-20260630"></script>
   </body>
 </html>

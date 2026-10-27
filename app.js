@@ -68,6 +68,7 @@ const cartEmpty = document.querySelector("#cartEmpty");
 const checkoutForm = document.querySelector("#checkoutForm");
 const checkoutButton = document.querySelector("#checkoutButton");
 const shippingProgress = document.querySelector("#shippingProgress");
+const cartPairings = document.querySelector("#cartPairings");
 const vipForm = document.querySelector("#vipForm");
 const vipMessage = document.querySelector("#vipMessage");
 const toast = document.querySelector("#toast");
@@ -399,6 +400,45 @@ function renderCart() {
       </div>
     </div>
   `).join("");
+
+  renderFreeShippingPairings(cartPairings, activeItems, total);
+}
+
+// Most bottles sit just under the free-shipping line, so suggest a second one that clears
+// it: same scent family as the bag first, then the lowest price that gets there.
+function freeShippingPairings(activeItems, subtotal, limit = 3) {
+  const remaining = FREE_SHIPPING_THRESHOLD - subtotal;
+  if (subtotal <= 0 || remaining <= 0) return [];
+
+  const inBag = new Set(activeItems.map((item) => item.product.id));
+  const families = new Set(activeItems.map((item) => item.product.family).filter(Boolean));
+  return products
+    .filter((product) => !inBag.has(product.id) && product.price >= remaining && product.stock !== 0)
+    .sort((a, b) => (families.has(b.family) - families.has(a.family)) || (a.price - b.price))
+    .slice(0, limit);
+}
+
+function renderFreeShippingPairings(container, activeItems, subtotal) {
+  if (!container) return;
+  const pairings = freeShippingPairings(activeItems, subtotal);
+  if (!pairings.length) {
+    container.innerHTML = "";
+    return;
+  }
+
+  container.innerHTML = `
+    <p class="pairings-title">Pair it and ship free</p>
+    ${pairings.map((product) => `
+      <div class="pairing-item">
+        <a class="pairing-thumb" href="product.html?id=${encodeURIComponent(product.id)}">${productImage(product)}</a>
+        <div>
+          <a href="product.html?id=${encodeURIComponent(product.id)}"><strong>${escapeHtml(product.name)}</strong></a>
+          <p class="microcopy">${currency.format(product.price)} | ${escapeHtml(product.family || product.size)}</p>
+        </div>
+        <button class="secondary-button" type="button" data-add="${escapeAttribute(product.id)}">Add</button>
+      </div>
+    `).join("")}
+  `;
 }
 
 async function loadReviewSummary() {
@@ -577,6 +617,11 @@ cartItems.addEventListener("click", (event) => {
 
   if (increase) updateQuantity(increase.dataset.increase, 1);
   if (decrease) updateQuantity(decrease.dataset.decrease, -1);
+});
+
+cartPairings?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-add]");
+  if (button) addToCart(button.dataset.add);
 });
 
 document.querySelector(".cart-toggle").addEventListener("click", openCart);

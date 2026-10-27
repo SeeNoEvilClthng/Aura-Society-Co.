@@ -1356,6 +1356,84 @@ h3 {
   transition: width 0.3s ease;
 }
 
+.pairings {
+  display: grid;
+  gap: 10px;
+}
+
+.pairings:empty {
+  display: none;
+}
+
+.cart-panel .pairings {
+  padding: 0 18px 14px;
+}
+
+.pairings-title {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pairing-item {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.pairing-item p {
+  margin: 2px 0 0;
+}
+
+.pairing-item a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.pairing-item strong {
+  display: block;
+  overflow: hidden;
+  font-size: 0.9rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pairing-thumb {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #f1f1f1;
+}
+
+.pairing-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pairing-thumb .product-placeholder {
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  font-size: 1.2rem;
+}
+
+.pairing-item .secondary-button {
+  min-height: 36px;
+}
+
+.discount-note {
+  margin: 0;
+  color: #5c5c5c;
+  font-size: 0.85rem;
+}
+
 .vip-trap {
   position: absolute;
   left: -9999px;
@@ -2297,6 +2375,37 @@ h3 {
   color: #08111a !important;
 }
 
+.accepted-payments {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 24px;
+}
+
+.accepted-payments p {
+  margin: 0;
+  color: #444444;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.accepted-payments ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.accepted-payments li {
+  padding: 4px 9px;
+  border: 1px solid #dcdcdc;
+  border-radius: 4px;
+  color: #333333;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
 .checkout-divider {
   position: relative;
   display: grid;
@@ -2476,6 +2585,11 @@ h3 {
   justify-content: space-between;
   gap: 14px;
   margin: 0;
+}
+
+.summary-lines .shipping-progress p {
+  display: block;
+  margin-bottom: 8px;
 }
 
 .shipping-choice {
@@ -2749,6 +2863,13 @@ button {
 
   .checkout-shell {
     grid-template-columns: minmax(0, 1fr) minmax(300px, 0.78fr);
+  }
+}
+
+/* Repeated after the 1180px rule above, which otherwise keeps phones on two columns. */
+@media (max-width: 760px) {
+  .checkout-shell {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
