@@ -179,7 +179,18 @@ function buildShippingOptions(subtotalCents, preferredMethod) {
   return [preferred, ...options.filter((option) => option.key !== preferred.key)];
 }
 
+// Checkout only reads products, so if the database is unreachable it falls back to the
+// bundled catalog rather than blocking every sale.
 async function readProducts() {
+  try {
+    return await readStoredProducts();
+  } catch (error) {
+    console.error("Product storage unavailable, using bundled catalog:", error.message);
+    return readCatalogProducts();
+  }
+}
+
+async function readStoredProducts() {
   if (hasSupabaseConfig()) {
     const products = await readSupabaseProducts();
     if (products.length) return products;
@@ -202,7 +213,8 @@ async function readProducts() {
 
 async function readSupabaseProducts() {
   const response = await fetch(`${getSupabaseRestUrl()}?key=eq.${encodeURIComponent(PRODUCT_KEY)}&select=value`, {
-    headers: getSupabaseHeaders()
+    headers: getSupabaseHeaders(),
+    signal: AbortSignal.timeout(5000)
   });
   const data = await response.json();
 

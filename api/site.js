@@ -39,7 +39,11 @@ module.exports = async function handler(request, response) {
 
   try {
     if (request.method === "GET" || request.method === "HEAD") {
-      sendJson(response, 200, { site: await readSite() });
+      const site = await readSite().catch((error) => {
+        console.error("Site storage unavailable, using bundled content:", error.message);
+        return readCatalogSite();
+      });
+      sendJson(response, 200, { site });
       return;
     }
 

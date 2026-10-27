@@ -18,7 +18,12 @@ module.exports = async function handler(request, response) {
   try {
     if (request.method === "GET" || request.method === "HEAD") {
       const requestUrl = new URL(request.url, "http://localhost");
-      const products = await readProducts();
+      // Shoppers get the bundled catalog if storage is down; admin writes below still
+      // read storage strictly so an outage can't overwrite saved products.
+      const products = await readProducts().catch((error) => {
+        console.error("Product storage unavailable, using bundled catalog:", error.message);
+        return readCatalogProducts();
+      });
       sendJson(response, 200, { products: shouldIncludeImages(requestUrl) ? products : stripProductImages(products) });
       return;
     }

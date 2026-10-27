@@ -1,6 +1,7 @@
 {
   "functions": {
-    "api/page.js": { "includeFiles": "templates/**" }
+    "api/page.js": { "includeFiles": "templates/**" },
+    "api/create-checkout-session.js": { "includeFiles": "catalog/products.json" }
   },
   "rewrites": [
     { "source": "/", "destination": "/api/page?page=index" },
