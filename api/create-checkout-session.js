@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { applyListingCorrections } = require("../lib/listing-corrections");
 
 const PRODUCT_KEY = "aura-society-products";
 const catalogPath = path.join(process.cwd(), "catalog", "products.json");
@@ -98,7 +99,8 @@ module.exports = async function handler(request, response) {
 
     checkoutItems.forEach((item, index) => {
       params.set(`line_items[${index}][quantity]`, String(item.quantity));
-      if (item.product.stripePriceId) {
+      // A synced Stripe price is only used while it still matches the listed price.
+      if (item.product.stripePriceId && item.product.stripeUnitAmount === item.unitAmount) {
         params.set(`line_items[${index}][price]`, item.product.stripePriceId);
       } else {
         params.set(`line_items[${index}][price_data][currency]`, "usd");
@@ -224,10 +226,10 @@ function buildShippingOptions(subtotalCents, preferredMethod) {
 // bundled catalog rather than blocking every sale.
 async function readProducts() {
   try {
-    return await readStoredProducts();
+    return applyListingCorrections(await readStoredProducts());
   } catch (error) {
     console.error("Product storage unavailable, using bundled catalog:", error.message);
-    return readCatalogProducts();
+    return applyListingCorrections(readCatalogProducts());
   }
 }
 
@@ -306,7 +308,8 @@ function normalizeProduct(product) {
     notes: sanitize(product.notes, 240),
     description: sanitize(product.description, 600),
     stock: clampInteger(product.stock, 0, 999999),
-    stripePriceId: sanitize(product.stripePriceId, 120)
+    stripePriceId: sanitize(product.stripePriceId, 120),
+    stripeUnitAmount: clampInteger(product.stripeUnitAmount, 0, 999999999)
   };
 }
 

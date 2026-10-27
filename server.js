@@ -4,6 +4,7 @@ const path = require("path");
 const seo = require("./lib/seo");
 const { requireAdmin } = require("./lib/admin-auth");
 const { stripProductImages } = require("./lib/product-images");
+const { applyListingCorrections } = require("./lib/listing-corrections");
 const subscribeHandler = require("./api/subscribe");
 const reviewsHandler = require("./api/reviews");
 const contactHandler = require("./api/contact");
@@ -490,7 +491,7 @@ function readProducts() {
 
   try {
     const products = JSON.parse(fs.readFileSync(productsPath, "utf8"));
-    return Array.isArray(products) ? products.map(normalizeProduct) : sampleProducts;
+    return Array.isArray(products) ? applyListingCorrections(products.map(normalizeProduct)) : sampleProducts;
   } catch {
     writeProducts(sampleProducts);
     return sampleProducts;

@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { requireAdmin } = require("../lib/admin-auth");
 const { stripProductImages } = require("../lib/product-images");
+const { applyListingCorrections } = require("../lib/listing-corrections");
 
 const PRODUCT_KEY = "aura-society-products";
 const catalogPath = path.join(process.cwd(), "catalog", "products.json");
@@ -96,7 +97,7 @@ async function readProducts() {
   if (hasSupabaseConfig()) {
     const products = await readSupabaseProducts();
     const catalogProducts = readCatalogProducts();
-    const mergedProducts = mergeCatalogProducts(products, catalogProducts);
+    const mergedProducts = mergeCatalogProducts(applyListingCorrections(products), catalogProducts);
 
     if (productsChanged(products, mergedProducts)) {
       await writeSupabaseProducts(mergedProducts);
@@ -112,7 +113,7 @@ async function readProducts() {
         const products = JSON.parse(stored);
         const normalizedProducts = Array.isArray(products) ? products.map(normalizeProduct) : [];
         const catalogProducts = readCatalogProducts();
-        const mergedProducts = mergeCatalogProducts(normalizedProducts, catalogProducts);
+        const mergedProducts = mergeCatalogProducts(applyListingCorrections(normalizedProducts), catalogProducts);
 
         if (productsChanged(normalizedProducts, mergedProducts)) {
           await kvCommand(["SET", PRODUCT_KEY, JSON.stringify(mergedProducts)]);
@@ -209,7 +210,7 @@ async function kvCommand(command) {
 function readCatalogProducts() {
   try {
     const products = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
-    return Array.isArray(products) ? products.map(normalizeProduct) : [];
+    return Array.isArray(products) ? applyListingCorrections(products.map(normalizeProduct)) : [];
   } catch {
     return [];
   }

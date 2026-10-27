@@ -134,7 +134,7 @@ function renderCollectionsPage() {
       <a class="promo-card" href="${collectionHref(collection)}">
         <div class="promo-media">${productImage(product, "tile")}</div>
         <div class="promo-copy">
-          <span>${collectionItems.length} fragrances</span>
+          <span>${collectionItems.length} ${collectionItems.length === 1 ? "fragrance" : "fragrances"}</span>
           <h3>${escapeHtml(collection)}</h3>
           <strong class="primary-button">Shop now</strong>
         </div>
