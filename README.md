@@ -33,6 +33,10 @@ https://your-domain.com/api/stripe-webhook
 
 Subscribe it to `checkout.session.completed`, then add the webhook signing secret as `STRIPE_WEBHOOK_SECRET`. Add `RESEND_API_KEY` to send the order notification email to `ORDER_NOTIFICATION_EMAIL`, which defaults to `xswann07@gmail.com`.
 
+### Sharing a Stripe account with another business
+
+Every Checkout Session this store creates carries `metadata[store]=aura-society` (also on the PaymentIntent, with the description "Aura Society Co. order"), and `/api/stripe-webhook` ignores sessions without that tag, so the other business's checkouts never trigger Aura order alerts or review emails. Give the other business's own webhook the same treatment if it reacts to `checkout.session.completed`. Use a restricted key (Checkout Sessions, Products and Prices: write) as `STRIPE_SECRET_KEY` instead of the account's full secret key. Set `STRIPE_STATEMENT_DESCRIPTOR_SUFFIX` (letters, numbers and spaces) so card statements name Aura Society; the account's shortened descriptor plus the suffix is cut off at 22 characters.
+
 ## Vercel Setup
 
 Use the repository root as the Vercel project root. Leave the framework preset as "Other" or static/default.

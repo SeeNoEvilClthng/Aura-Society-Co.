@@ -21,6 +21,9 @@ module.exports = async function handler(request, response) {
 };
 
 async function handleCheckoutCompleted(session, request) {
+  // On a shared Stripe account this endpoint also receives the other business's
+  // checkouts; only orders tagged by create-checkout-session belong to this store.
+  if (session.metadata?.store !== "aura-society") return;
   if (!getResendApiKey()) return;
 
   const lineItems = await fetchStripeLineItems(session.id);

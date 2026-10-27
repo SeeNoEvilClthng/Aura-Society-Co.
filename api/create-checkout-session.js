@@ -58,6 +58,15 @@ module.exports = async function handler(request, response) {
     params.set("metadata[customer_name]", sanitize(customer.name, 120));
     params.set("metadata[shipping_address]", sanitize(customer.address, 450));
     params.set("metadata[shipping_method]", shippingOptions[0].key);
+    // The Stripe account can be shared with another business, so tag every order;
+    // the webhook only handles sessions carrying this tag.
+    params.set("metadata[store]", "aura-society");
+    params.set("payment_intent_data[metadata][store]", "aura-society");
+    params.set("payment_intent_data[description]", "Aura Society Co. order");
+
+    if (process.env.STRIPE_STATEMENT_DESCRIPTOR_SUFFIX) {
+      params.set("payment_intent_data[statement_descriptor_suffix]", sanitize(process.env.STRIPE_STATEMENT_DESCRIPTOR_SUFFIX, 22));
+    }
 
     if (process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION) {
       params.set("payment_method_configuration", process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION);
