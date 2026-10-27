@@ -11,7 +11,7 @@ module.exports = async function handler(request, response) {
     const event = verifyStripeEvent(rawBody, request.headers["stripe-signature"]);
 
     if (event.type === "checkout.session.completed") {
-      await handleCheckoutCompleted(event.data.object);
+      await handleCheckoutCompleted(event.data.object, request);
     }
 
     sendJson(response, 200, { received: true });
@@ -20,7 +20,7 @@ module.exports = async function handler(request, response) {
   }
 };
 
-async function handleCheckoutCompleted(session) {
+async function handleCheckoutCompleted(session, request) {
   if (!getResendApiKey()) return;
 
   const lineItems = await fetchStripeLineItems(session.id);
@@ -45,6 +45,118 @@ async function handleCheckoutCompleted(session) {
       orderSummary
     ].join("\n")
   });
+
+  // Sent after the owner alert so a failed alert (which makes Stripe retry) never
+  // leaves a review email already scheduled. A review-email failure is logged, not
+  // thrown, so it can't trigger retries on its own.
+  try {
+    await scheduleReviewRequest(session, lineItems, request);
+  } catch (error) {
+    console.error("Review request email failed:", error.message);
+  }
+}
+
+// ---- Review request email ----
+// Opt-in with REVIEW_REQUEST_EMAILS=on. Needs a sender on a domain verified in Resend
+// (REVIEW_EMAIL_FROM or ORDER_NOTIFICATION_FROM); Resend's onboarding@resend.dev
+// sender can only email the account owner.
+async function scheduleReviewRequest(session, lineItems, request) {
+  if (String(process.env.REVIEW_REQUEST_EMAILS || "").toLowerCase() !== "on") return;
+  if (session.payment_status && session.payment_status !== "paid") return;
+
+  const to = session.customer_details?.email || session.customer_email;
+  const from = process.env.REVIEW_EMAIL_FROM || process.env.ORDER_NOTIFICATION_FROM || "";
+  if (!to || !from || /@resend\.dev>?$/i.test(from.trim())) return;
+
+  const reviewUrl = `${getSiteUrl(request)}/review.html?session=${encodeURIComponent(session.id)}`;
+  const firstName = String(session.customer_details?.name || session.metadata?.customer_name || "").trim().split(/\s+/)[0];
+  const itemNames = lineItems.map((item) => item.description || item.price?.product?.name).filter(Boolean);
+  const itemText = itemNames.length === 1 ? itemNames[0] : "your new fragrances";
+  const message = buildReviewEmail({ firstName, itemText, itemNames, reviewUrl });
+
+  const payload = {
+    from,
+    to: [to],
+    subject: `How's ${itemText}?`,
+    text: message.text,
+    html: message.html
+  };
+
+  const delayDays = getReviewDelayDays();
+  if (delayDays > 0) {
+    payload.scheduled_at = new Date(Date.now() + delayDays * 24 * 60 * 60 * 1000).toISOString();
+  }
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${getResendApiKey()}`,
+      "Content-Type": "application/json",
+      // Stripe can deliver the same event more than once; this keeps it to one email.
+      "Idempotency-Key": `review-request/${session.id}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.message || `Resend responded ${response.status}`);
+  }
+}
+
+function buildReviewEmail({ firstName, itemText, itemNames, reviewUrl }) {
+  const greeting = firstName ? `Hi ${firstName},` : "Hi,";
+  const text = [
+    greeting,
+    "",
+    `Thanks again for shopping with Aura Society Co. Now that you've had time with ${itemText}, we'd love to hear what you think.`,
+    "",
+    "Your honest review, good or bad, helps other shoppers find their scent. It takes about a minute:",
+    reviewUrl,
+    "",
+    "If your order hasn't arrived yet or something isn't right, just reply to this email and we'll help.",
+    "",
+    "Aura Society Co."
+  ].join("\n");
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #111111; line-height: 1.5; max-width: 520px;">
+      <p>${escapeHtml(greeting)}</p>
+      <p>Thanks again for shopping with Aura Society Co. Now that you've had time with ${escapeHtml(itemText)}, we'd love to hear what you think.</p>
+      ${itemNames.length > 1 ? `<ul>${itemNames.map((name) => `<li>${escapeHtml(name)}</li>`).join("")}</ul>` : ""}
+      <p>Your honest review, good or bad, helps other shoppers find their scent. It takes about a minute.</p>
+      <p><a href="${escapeHtml(reviewUrl)}" style="display: inline-block; padding: 12px 22px; background: #050505; color: #ffffff; text-decoration: none; font-weight: bold;">Review my order</a></p>
+      <p style="color: #555555; font-size: 13px;">If your order hasn't arrived yet or something isn't right, just reply to this email and we'll help.</p>
+      <p>Aura Society Co.</p>
+    </div>
+  `;
+
+  return { text, html };
+}
+
+function getReviewDelayDays() {
+  const days = Number(process.env.REVIEW_REQUEST_DELAY_DAYS);
+  if (!Number.isFinite(days)) return 7;
+  return Math.min(Math.max(days, 0), 29);
+}
+
+function getSiteUrl(request) {
+  const configured = (process.env.SITE_URL || "").replace(/\/$/, "");
+  const isLocalUrl = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/i.test(configured);
+  if (configured && !(isLocalUrl && process.env.VERCEL)) return configured;
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+
+  const host = request?.headers?.["x-forwarded-host"] || request?.headers?.host || "localhost:4173";
+  return `https://${host}`;
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 async function fetchStripeLineItems(sessionId) {
