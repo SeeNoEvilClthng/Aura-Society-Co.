@@ -289,7 +289,10 @@ function getKvToken() {
 }
 
 function getSiteUrl(request) {
-  if (process.env.SITE_URL) return process.env.SITE_URL.replace(/\/$/, "");
+  // A localhost SITE_URL copied from .env would send paying customers to a dead page.
+  const configured = (process.env.SITE_URL || "").replace(/\/$/, "");
+  const isLocalUrl = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/i.test(configured);
+  if (configured && !(isLocalUrl && process.env.VERCEL)) return configured;
   if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
 
