@@ -14,6 +14,15 @@ module.exports = async function handler(request, response) {
       await handleCheckoutCompleted(event.data.object, request);
     }
 
+    if (event.type === "checkout.session.expired") {
+      // A missed reminder isn't worth a Stripe retry storm; log and acknowledge.
+      try {
+        await sendCartRecoveryEmail(event.data.object);
+      } catch (error) {
+        console.error("Cart recovery email failed:", error.message);
+      }
+    }
+
     sendJson(response, 200, { received: true });
   } catch (error) {
     sendJson(response, 400, { error: error.message || "Webhook failed." });
@@ -131,6 +140,82 @@ function buildReviewEmail({ firstName, itemText, itemNames, reviewUrl }) {
       <p><a href="${escapeHtml(reviewUrl)}" style="display: inline-block; padding: 12px 22px; background: #050505; color: #ffffff; text-decoration: none; font-weight: bold;">Review my order</a></p>
       <p style="color: #555555; font-size: 13px;">If your order hasn't arrived yet or something isn't right, just reply to this email and we'll help.</p>
       <p>Aura Society Co.</p>
+    </div>
+  `;
+
+  return { text, html };
+}
+
+// ---- Abandoned checkout reminder ----
+// Opt-in with CART_RECOVERY_EMAILS=on (create-checkout-session then asks Stripe for a
+// recovery link). Only emails shoppers who agreed to offers, on Stripe's page or ours.
+async function sendCartRecoveryEmail(session) {
+  if (session.metadata?.store !== "aura-society") return;
+  if (String(process.env.CART_RECOVERY_EMAILS || "").toLowerCase() !== "on") return;
+  if (!getResendApiKey()) return;
+
+  const recoveryUrl = session.after_expiration?.recovery?.url;
+  const to = session.customer_details?.email || session.customer_email;
+  const consented = session.consent?.promotions === "opt_in" || session.metadata?.marketing_opt_in === "yes";
+  const from = process.env.REVIEW_EMAIL_FROM || process.env.ORDER_NOTIFICATION_FROM || "";
+  if (!recoveryUrl || !to || !consented || !from || /@resend\.dev>?$/i.test(from.trim())) return;
+
+  const lineItems = await fetchStripeLineItems(session.id);
+  const itemNames = lineItems.map((item) => item.description || item.price?.product?.name).filter(Boolean);
+  const itemText = itemNames.length === 1 ? itemNames[0] : "your fragrances";
+  const firstName = String(session.customer_details?.name || session.metadata?.customer_name || "").trim().split(/\s+/)[0];
+  const message = buildCartRecoveryEmail({ firstName, itemText, itemNames, recoveryUrl });
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${getResendApiKey()}`,
+      "Content-Type": "application/json",
+      "Idempotency-Key": `cart-recovery/${session.id}`
+    },
+    body: JSON.stringify({
+      from,
+      to: [to],
+      subject: `Still thinking about ${itemText}?`,
+      text: message.text,
+      html: message.html
+    })
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.message || `Resend responded ${response.status}`);
+  }
+}
+
+function buildCartRecoveryEmail({ firstName, itemText, itemNames, recoveryUrl }) {
+  const greeting = firstName ? `Hi ${firstName},` : "Hi,";
+  const address = String(process.env.BUSINESS_MAILING_ADDRESS || "").trim();
+  const footer = "You're getting this because you asked for news and offers from Aura Society Co. Reply \"unsubscribe\" and we'll stop.";
+  const text = [
+    greeting,
+    "",
+    `You left ${itemText} in your bag. It's saved for you, and you can pick up right where you left off:`,
+    recoveryUrl,
+    "",
+    "Every bottle is 100% authentic, and standard shipping is free on orders $100+.",
+    "Questions about a scent? Just reply to this email.",
+    "",
+    "Aura Society Co.",
+    "",
+    footer,
+    address
+  ].filter((line, index, lines) => line || lines[index - 1]).join("\n").trim();
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #111111; line-height: 1.5; max-width: 520px;">
+      <p>${escapeHtml(greeting)}</p>
+      <p>You left ${escapeHtml(itemText)} in your bag. It's saved for you, and you can pick up right where you left off.</p>
+      ${itemNames.length > 1 ? `<ul>${itemNames.map((name) => `<li>${escapeHtml(name)}</li>`).join("")}</ul>` : ""}
+      <p><a href="${escapeHtml(recoveryUrl)}" style="display: inline-block; padding: 12px 22px; background: #050505; color: #ffffff; text-decoration: none; font-weight: bold;">Complete my order</a></p>
+      <p>Every bottle is 100% authentic, and standard shipping is free on orders $100+. Questions about a scent? Just reply to this email.</p>
+      <p>Aura Society Co.</p>
+      <p style="color: #777777; font-size: 12px;">${escapeHtml(footer)}${address ? `<br>${escapeHtml(address)}` : ""}</p>
     </div>
   `;
 

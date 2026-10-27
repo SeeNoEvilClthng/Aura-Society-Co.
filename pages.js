@@ -354,7 +354,8 @@ function renderCheckoutPage() {
             description: item.product.description,
             quantity: item.quantity
           })),
-          shippingMethod: document.querySelector("input[name='shippingMethod']:checked")?.value || "standard"
+          shippingMethod: document.querySelector("input[name='shippingMethod']:checked")?.value || "standard",
+          marketingOptIn: Boolean(formData.get("marketing"))
         })
       });
 

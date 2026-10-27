@@ -63,9 +63,29 @@ module.exports = async function handler(request, response) {
     params.set("metadata[store]", "aura-society");
     params.set("payment_intent_data[metadata][store]", "aura-society");
     params.set("payment_intent_data[description]", "Aura Society Co. order");
+    if (payload.marketingOptIn === true) {
+      params.set("metadata[marketing_opt_in]", "yes");
+    }
+
+    // Settings that are nice to have but must never block a sale: if Stripe rejects any of
+    // them (bad env value, feature not available on the account), checkout retries without.
+    const optionalKeys = [];
+    const setOptional = (key, value) => {
+      params.set(key, value);
+      optionalKeys.push(key);
+    };
 
     if (process.env.STRIPE_STATEMENT_DESCRIPTOR_SUFFIX) {
-      params.set("payment_intent_data[statement_descriptor_suffix]", sanitize(process.env.STRIPE_STATEMENT_DESCRIPTOR_SUFFIX, 22));
+      setOptional("payment_intent_data[statement_descriptor_suffix]", sanitize(process.env.STRIPE_STATEMENT_DESCRIPTOR_SUFFIX, 22));
+    }
+
+    if (isCartRecoveryEnabled()) {
+      // Abandoned checkouts expire sooner and get a Stripe recovery link, which the webhook
+      // emails to shoppers who agreed to promotional email.
+      setOptional("expires_at", String(Math.floor(Date.now() / 1000) + Math.round(getCartRecoveryHours() * 3600)));
+      setOptional("after_expiration[recovery][enabled]", "true");
+      setOptional("after_expiration[recovery][allow_promotion_codes]", "true");
+      setOptional("consent_collection[promotions]", "auto");
     }
 
     if (process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION) {
@@ -100,15 +120,13 @@ module.exports = async function handler(request, response) {
       params.set(`shipping_options[${index}][shipping_rate_data][delivery_estimate][maximum][value]`, String(option.maxDays));
     });
 
-    const stripeResponse = await fetch("https://api.stripe.com/v1/checkout/sessions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${stripeSecretKey}`,
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: params
-    });
-    const session = await stripeResponse.json();
+    let { stripeResponse, session } = await createStripeSession(stripeSecretKey, params);
+
+    if (stripeResponse.status === 400 && optionalKeys.length) {
+      console.error("Stripe rejected optional checkout settings, retrying without them:", session.error?.message);
+      optionalKeys.forEach((key) => params.delete(key));
+      ({ stripeResponse, session } = await createStripeSession(stripeSecretKey, params));
+    }
 
     if (!stripeResponse.ok) {
       sendJson(response, stripeResponse.status, {
@@ -122,6 +140,29 @@ module.exports = async function handler(request, response) {
     sendJson(response, 500, { error: error.message || "Stripe checkout could not start." });
   }
 };
+
+async function createStripeSession(stripeSecretKey, params) {
+  const stripeResponse = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${stripeSecretKey}`,
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: params
+  });
+  return { stripeResponse, session: await stripeResponse.json() };
+}
+
+function isCartRecoveryEnabled() {
+  return String(process.env.CART_RECOVERY_EMAILS || "").toLowerCase() === "on";
+}
+
+// Stripe allows a Checkout Session to expire between 30 minutes and 24 hours after creation.
+function getCartRecoveryHours() {
+  const hours = Number(process.env.CART_RECOVERY_HOURS);
+  if (!Number.isFinite(hours)) return 2;
+  return Math.min(Math.max(hours, 0.75), 23);
+}
 
 async function readPayload(request) {
   if (request.body && typeof request.body === "object") {

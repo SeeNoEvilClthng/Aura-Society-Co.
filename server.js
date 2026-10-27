@@ -275,6 +275,9 @@ async function createCheckoutSession(request, response) {
   params.set("metadata[customer_name]", sanitize(customer.name, 120));
   params.set("metadata[shipping_address]", sanitize(customer.address, 450));
   params.set("metadata[shipping_method]", shippingOptions[0].key);
+  // Same tag as api/create-checkout-session.js; the webhook ignores untagged sessions.
+  params.set("metadata[store]", "aura-society");
+  params.set("payment_intent_data[metadata][store]", "aura-society");
 
   if (process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION) {
     params.set("payment_method_configuration", process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION);
