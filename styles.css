@@ -1212,6 +1212,126 @@ h3 {
   text-transform: uppercase;
 }
 
+.stars,
+.card-rating {
+  color: #b8860b;
+  letter-spacing: 0.05em;
+}
+
+.card-rating {
+  font-weight: 800;
+}
+
+.rating-line {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.product-reviews:empty {
+  display: none;
+}
+
+.review-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.review-entry {
+  padding: 16px 18px;
+  border: 1px solid #dedede;
+  background: #ffffff;
+}
+
+.review-entry p {
+  margin: 0 0 6px;
+}
+
+.review-card {
+  width: min(100%, 640px);
+}
+
+.review-items {
+  display: grid;
+  gap: 22px;
+  margin-top: 12px;
+}
+
+.review-item {
+  padding-top: 18px;
+  border-top: 1px solid #dedede;
+}
+
+.review-item h2 {
+  margin: 0 0 10px;
+  font-size: 1.1rem;
+}
+
+.review-form {
+  display: grid;
+  gap: 12px;
+}
+
+.star-input {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.star-input legend {
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.star-input input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.star-input label {
+  color: #cfcfcf;
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.star-input input:checked ~ label,
+.star-input label:hover,
+.star-input label:hover ~ label {
+  color: #b8860b;
+}
+
+.star-input input:focus-visible + label {
+  outline: 2px solid #050505;
+  outline-offset: 2px;
+}
+
+.review-status {
+  min-height: 1.2em;
+  margin: 0;
+}
+
+.review-invite {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #dedede;
+}
+
+.is-hidden-review {
+  opacity: 0.55;
+}
+
 .shipping-progress p {
   margin: 0 0 8px;
   font-size: 0.9rem;

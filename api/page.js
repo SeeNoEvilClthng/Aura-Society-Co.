@@ -1,5 +1,6 @@
 const { readProducts, readCatalogProducts } = require("./products");
 const { getSiteUrl, pageNeedsProducts, renderPage } = require("../lib/seo");
+const { listReviews } = require("../lib/reviews");
 
 // Serves index, collections, collection, and product pages with real titles,
 // descriptions, social preview tags, and structured data already in the HTML.
@@ -17,9 +18,22 @@ module.exports = async function handler(request, response) {
     }
   }
 
+  let reviews = [];
+  if (page === "product" && query.id) {
+    try {
+      // Don't let a slow review store hold up the page; ratings also load client-side.
+      reviews = await Promise.race([
+        listReviews(String(query.id)),
+        new Promise((resolve) => setTimeout(() => resolve([]), 1500))
+      ]);
+    } catch {
+      reviews = [];
+    }
+  }
+
   let html;
   try {
-    html = renderPage(page, { products, query, siteUrl });
+    html = renderPage(page, { products, query, siteUrl, reviews });
   } catch (error) {
     response.statusCode = 500;
     response.setHeader("Content-Type", "text/plain; charset=utf-8");

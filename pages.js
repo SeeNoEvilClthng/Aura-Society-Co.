@@ -6,6 +6,7 @@ const currency = new Intl.NumberFormat("en-US", { style: "currency", currency: "
 let products = [];
 let cart = loadCart();
 let productImagesHydrated = false;
+let reviewSummary = {};
 
 const toast = document.querySelector("#toast");
 const cartCount = document.querySelector("#cartCount");
@@ -21,9 +22,70 @@ async function initPage() {
     if (page === "product") renderProductPage();
     if (page === "checkout") renderCheckoutPage();
     hydrateProductImages();
+    if (page !== "checkout") loadReviewSummary();
+    if (page === "product") loadProductReviews();
   } catch (error) {
     showToast(error.message);
   }
+}
+
+async function loadReviewSummary() {
+  try {
+    const data = await requestJson(`${API_BASE}/api/reviews?summary=1`);
+    reviewSummary = data.summary || {};
+    if (Object.keys(reviewSummary).length) rerenderCurrentPage();
+  } catch {
+    reviewSummary = {};
+  }
+}
+
+async function loadProductReviews() {
+  const container = document.querySelector("#productReviews");
+  const product = currentProduct();
+  if (!container || !product) return;
+
+  try {
+    const data = await requestJson(`${API_BASE}/api/reviews?productId=${encodeURIComponent(product.id)}`);
+    container.innerHTML = reviewsSection(data.summary, data.reviews || []);
+  } catch {
+    // Keep the server-rendered reviews (if any) when the API is unavailable.
+  }
+}
+
+function reviewsSection(summary, reviews) {
+  const heading = summary && summary.count
+    ? `<p class="rating-line">${starsMarkup(summary.average)} <strong>${summary.average.toFixed(1)}</strong> out of 5 from ${summary.count} verified review${summary.count === 1 ? "" : "s"}</p>`
+    : '<p class="microcopy">No reviews yet. Bought this fragrance? Use the review link from your order confirmation.</p>';
+
+  return `
+    <div class="retail-section-head"><h2>Reviews</h2></div>
+    ${heading}
+    <div class="review-list">
+      ${reviews.map((review) => `
+        <article class="review-entry">
+          <p>${starsMarkup(review.rating)}${review.title ? ` <strong>${escapeHtml(review.title)}</strong>` : ""}</p>
+          <p>${escapeHtml(review.body)}</p>
+          <p class="microcopy">${escapeHtml(review.name)}${review.verified ? " | Verified buyer" : ""} | ${escapeHtml(new Date(review.createdAt).toLocaleDateString())}</p>
+        </article>
+      `).join("")}
+    </div>
+  `;
+}
+
+function starsMarkup(rating) {
+  const rounded = Math.round(Number(rating) || 0);
+  return `<span class="stars" aria-label="${Number(rating).toFixed(1)} out of 5 stars">${"&#9733;".repeat(rounded)}${"&#9734;".repeat(5 - rounded)}</span>`;
+}
+
+function ratingBadge(productId) {
+  const entry = reviewSummary[productId];
+  if (!entry || !entry.count) return "<span>100% Authentic</span>";
+  return `<span class="card-rating" aria-label="Rated ${entry.average.toFixed(1)} out of 5 from ${entry.count} reviews">&#9733; ${entry.average.toFixed(1)} (${entry.count})</span>`;
+}
+
+function currentProduct() {
+  const id = new URLSearchParams(window.location.search).get("id");
+  return products.find((entry) => entry.id === id) || products[0];
 }
 
 async function fetchProducts() {
@@ -162,6 +224,7 @@ function renderProductPage() {
     <div class="product-detail-copy">
       <a class="back-link" href="${collectionHref(product.collection)}">${escapeHtml(product.collection || "Collection")}</a>
       <h1>${escapeHtml(product.name)}</h1>
+      ${reviewSummary[product.id]?.count ? `<a class="rating-line" href="#productReviews">${starsMarkup(reviewSummary[product.id].average)} ${reviewSummary[product.id].average.toFixed(1)} (${reviewSummary[product.id].count} review${reviewSummary[product.id].count === 1 ? "" : "s"})</a>` : ""}
       <p class="product-detail-brand">${escapeHtml(product.brand)} | ${escapeHtml(product.size)}</p>
       <p class="product-detail-price">${currency.format(product.price)}</p>
       <p>${escapeHtml(product.description)}</p>
@@ -313,7 +376,7 @@ function productCards(entries) {
       <div class="product-info">
         <div class="product-meta">
           <span>${escapeHtml(product.brand)}</span>
-          <span>100% Authentic</span>
+          ${ratingBadge(product.id)}
         </div>
         <h3><a href="product.html?id=${encodeURIComponent(product.id)}">${escapeHtml(product.name)}</a></h3>
         <p class="notes">${escapeHtml(product.notes)}</p>

@@ -35,6 +35,7 @@ let site = defaultSite;
 let activeCollection = "all";
 let cart = loadCart();
 let productImagesHydrated = false;
+let reviewSummary = {};
 
 const topBanner = document.querySelector("#topBanner");
 const primaryNav = document.querySelector("#primaryNav");
@@ -92,6 +93,7 @@ async function loadStorefront() {
     renderProducts();
     renderCart();
     hydrateProductImages();
+    loadReviewSummary();
   } catch (error) {
     productGrid.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
     showToast(error.message);
@@ -346,7 +348,7 @@ function renderProducts() {
       <div class="product-info">
         <div class="product-meta">
           <span>${escapeHtml(product.brand)}</span>
-          <span>100% Authentic</span>
+          ${ratingBadge(product.id)}
         </div>
         <h3><a href="product.html?id=${encodeURIComponent(product.id)}">${escapeHtml(product.name)}</a></h3>
         <p class="notes">${escapeHtml(product.notes)}</p>
@@ -397,6 +399,22 @@ function renderCart() {
       </div>
     </div>
   `).join("");
+}
+
+async function loadReviewSummary() {
+  try {
+    const data = await requestJson(`${API_BASE}/api/reviews?summary=1`);
+    reviewSummary = data.summary || {};
+    if (Object.keys(reviewSummary).length) renderProducts();
+  } catch {
+    reviewSummary = {};
+  }
+}
+
+function ratingBadge(productId) {
+  const entry = reviewSummary[productId];
+  if (!entry || !entry.count) return "<span>100% Authentic</span>";
+  return `<span class="card-rating" aria-label="Rated ${entry.average.toFixed(1)} out of 5 from ${entry.count} reviews">&#9733; ${entry.average.toFixed(1)} (${entry.count})</span>`;
 }
 
 function renderShippingProgress(container, subtotal) {

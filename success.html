@@ -24,11 +24,20 @@
         <h1>Thank You</h1>
         <p>Your Stripe checkout was completed. A confirmation email will come from Stripe if email receipts are enabled.</p>
         <a class="primary-link" href="index.html#shop">Continue shopping</a>
+        <div id="reviewInvite" class="review-invite hidden">
+          <p><strong>Once your fragrance arrives,</strong> come back and tell other shoppers what you think. Bookmark this link:</p>
+          <a id="reviewLink" class="secondary-button" href="review.html">Review my order</a>
+        </div>
       </section>
     </main>
 
     <script>
       localStorage.removeItem("auraSocietyCart");
+      const orderSession = new URLSearchParams(window.location.search).get("session_id");
+      if (orderSession && /^cs_/.test(orderSession)) {
+        document.querySelector("#reviewLink").href = `review.html?session=${encodeURIComponent(orderSession)}`;
+        document.querySelector("#reviewInvite").classList.remove("hidden");
+      }
     </script>
   </body>
 </html>

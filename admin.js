@@ -120,6 +120,8 @@ const loadSubscribersButton = document.querySelector("#loadSubscribersButton");
 const downloadSubscribersButton = document.querySelector("#downloadSubscribersButton");
 const subscriberSummary = document.querySelector("#subscriberSummary");
 const subscriberList = document.querySelector("#subscriberList");
+const loadReviewsButton = document.querySelector("#loadReviewsButton");
+const adminReviewList = document.querySelector("#adminReviewList");
 const toast = document.querySelector("#toast");
 let subscribers = [];
 
@@ -744,6 +746,55 @@ loadSubscribersButton.addEventListener("click", async () => {
   } finally {
     loadSubscribersButton.disabled = false;
     loadSubscribersButton.textContent = "Load subscribers";
+  }
+});
+
+async function loadAdminReviews() {
+  const data = await requestJson("/api/reviews?all=1");
+  const list = Array.isArray(data.reviews) ? data.reviews : [];
+  adminReviewList.innerHTML = list.length
+    ? list.map((review) => `
+      <article class="admin-product${review.hidden ? " is-hidden-review" : ""}">
+        <div>
+          <strong>${"&#9733;".repeat(review.rating)}${"&#9734;".repeat(5 - review.rating)} ${escapeHtml(review.title || review.productName)}</strong>
+          <p>${escapeHtml(review.body)}</p>
+          <p>${escapeHtml(review.name)} | ${escapeHtml(review.productName)} | ${escapeHtml(new Date(review.createdAt).toLocaleDateString())}${review.hidden ? " | Hidden" : ""}</p>
+        </div>
+        <div class="admin-actions">
+          <button class="mini-button${review.hidden ? "" : " danger"}" type="button" data-review-key="${escapeAttribute(review.key)}" data-review-hidden="${review.hidden ? "false" : "true"}">${review.hidden ? "Show" : "Hide"}</button>
+        </div>
+      </article>
+    `).join("")
+    : '<div class="empty-state">No reviews yet. Buyers get a review link on their order confirmation page.</div>';
+}
+
+loadReviewsButton.addEventListener("click", async () => {
+  loadReviewsButton.disabled = true;
+  try {
+    await loadAdminReviews();
+  } catch (error) {
+    showToast(error.message);
+  } finally {
+    loadReviewsButton.disabled = false;
+  }
+});
+
+adminReviewList.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-review-key]");
+  if (!button) return;
+
+  button.disabled = true;
+  try {
+    await requestJson("/api/reviews", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: button.dataset.reviewKey, hidden: button.dataset.reviewHidden === "true" })
+    });
+    await loadAdminReviews();
+    showToast(button.dataset.reviewHidden === "true" ? "Review hidden." : "Review visible again.");
+  } catch (error) {
+    showToast(error.message);
+    button.disabled = false;
   }
 });
 

@@ -4,6 +4,8 @@ const path = require("path");
 const seo = require("./lib/seo");
 const { requireAdmin } = require("./lib/admin-auth");
 const subscribeHandler = require("./api/subscribe");
+const reviewsHandler = require("./api/reviews");
+const { listReviews } = require("./lib/reviews");
 
 loadEnv();
 
@@ -121,6 +123,11 @@ const server = http.createServer(async (request, response) => {
       return;
     }
 
+    if (requestUrl.pathname === "/api/reviews") {
+      await reviewsHandler(request, response);
+      return;
+    }
+
     if (requestUrl.pathname === "/api/products") {
       if (isWrite && !(await requireAdmin(request, sendAuthError))) return;
       await handleProducts(request, response);
@@ -138,7 +145,7 @@ const server = http.createServer(async (request, response) => {
       return;
     }
 
-    if ((request.method === "GET" || request.method === "HEAD") && serveSeoRoute(request, response, requestUrl)) {
+    if ((request.method === "GET" || request.method === "HEAD") && await serveSeoRoute(request, response, requestUrl)) {
       return;
     }
 
@@ -327,7 +334,7 @@ async function createCheckoutSession(request, response) {
 }
 
 // Local mirror of the vercel.json rewrites to api/page.js and api/seo.js.
-function serveSeoRoute(request, response, requestUrl) {
+async function serveSeoRoute(request, response, requestUrl) {
   const pages = {
     "/": "index",
     "/index.html": "index",
@@ -345,7 +352,8 @@ function serveSeoRoute(request, response, requestUrl) {
   if (page) {
     const products = seo.pageNeedsProducts(page) ? readProducts() : [];
     const query = Object.fromEntries(requestUrl.searchParams);
-    send(200, mimeTypes[".html"], seo.renderPage(page, { products, query, siteUrl }));
+    const reviews = page === "product" && query.id ? await listReviews(query.id).catch(() => []) : [];
+    send(200, mimeTypes[".html"], seo.renderPage(page, { products, query, siteUrl, reviews }));
     return true;
   }
 
