@@ -1,6 +1,8 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const seo = require("./lib/seo");
+const { requireAdmin } = require("./lib/admin-auth");
 
 loadEnv();
 
@@ -105,18 +107,32 @@ const server = http.createServer(async (request, response) => {
 
     const requestUrl = new URL(request.url, SITE_URL);
 
+    const isWrite = !["GET", "HEAD"].includes(request.method);
+    const sendAuthError = (statusCode, data) => sendJson(response, statusCode, data);
+
+    if (requestUrl.pathname === "/api/admin-session") {
+      if (await requireAdmin(request, sendAuthError)) sendJson(response, 200, { ok: true });
+      return;
+    }
+
     if (requestUrl.pathname === "/api/products") {
+      if (isWrite && !(await requireAdmin(request, sendAuthError))) return;
       await handleProducts(request, response);
       return;
     }
 
     if (requestUrl.pathname === "/api/site") {
+      if (isWrite && !(await requireAdmin(request, sendAuthError))) return;
       await handleSite(request, response);
       return;
     }
 
     if (request.method === "POST" && request.url === "/api/create-checkout-session") {
       await createCheckoutSession(request, response);
+      return;
+    }
+
+    if ((request.method === "GET" || request.method === "HEAD") && serveSeoRoute(request, response, requestUrl)) {
       return;
     }
 
@@ -304,6 +320,54 @@ async function createCheckoutSession(request, response) {
   sendJson(response, 200, { url: session.url });
 }
 
+// Local mirror of the vercel.json rewrites to api/page.js and api/seo.js.
+function serveSeoRoute(request, response, requestUrl) {
+  const pages = {
+    "/": "index",
+    "/index.html": "index",
+    "/collections.html": "collections",
+    "/collection.html": "collection",
+    "/product.html": "product"
+  };
+  const siteUrl = seo.getSiteUrl(request);
+  const send = (statusCode, contentType, body) => {
+    response.writeHead(statusCode, { "Content-Type": contentType });
+    response.end(request.method === "HEAD" ? undefined : body);
+  };
+
+  const page = pages[requestUrl.pathname];
+  if (page) {
+    const products = seo.pageNeedsProducts(page) ? readProducts() : [];
+    const query = Object.fromEntries(requestUrl.searchParams);
+    send(200, mimeTypes[".html"], seo.renderPage(page, { products, query, siteUrl }));
+    return true;
+  }
+
+  if (requestUrl.pathname === "/sitemap.xml") {
+    send(200, "application/xml; charset=utf-8", seo.renderSitemap(readProducts(), siteUrl));
+    return true;
+  }
+
+  if (requestUrl.pathname === "/robots.txt") {
+    send(200, "text/plain; charset=utf-8", seo.renderRobots(siteUrl));
+    return true;
+  }
+
+  const imageMatch = /^\/images\/products\/([^/]+)$/.exec(requestUrl.pathname);
+  if (imageMatch) {
+    const product = readProducts().find((entry) => entry.id === decodeURIComponent(imageMatch[1]));
+    const image = product && seo.decodeProductImage(product.image);
+    if (!image) {
+      send(404, "text/plain; charset=utf-8", "Image not found.");
+      return true;
+    }
+    send(200, image.contentType, image.body);
+    return true;
+  }
+
+  return false;
+}
+
 function serveStatic(request, response) {
   const requestUrl = new URL(request.url, SITE_URL);
   const cleanPath = decodeURIComponent(requestUrl.pathname === "/" ? "/index.html" : requestUrl.pathname);
@@ -343,7 +407,7 @@ function isBlockedStaticPath(cleanPath) {
     "/server.js"
   ]);
 
-  return normalized.includes("/.") || normalized.startsWith("/data/") || blockedFiles.has(normalized);
+  return normalized.includes("/.") || normalized.startsWith("/data/") || normalized.startsWith("/templates/") || normalized.startsWith("/lib/") || blockedFiles.has(normalized);
 }
 
 function readJson(request) {
@@ -375,7 +439,7 @@ function sendJson(response, statusCode, data) {
 function applyCors(response) {
   response.setHeader("Access-Control-Allow-Origin", "*");
   response.setHeader("Access-Control-Allow-Methods", "GET, HEAD, PUT, POST, DELETE, OPTIONS");
-  response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 }
 
 function ensureDataStore() {

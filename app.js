@@ -342,7 +342,7 @@ function renderProducts() {
       <div class="product-info">
         <div class="product-meta">
           <span>${escapeHtml(product.brand)}</span>
-          <span>Star 5.0</span>
+          <span>100% Authentic</span>
         </div>
         <h3><a href="product.html?id=${encodeURIComponent(product.id)}">${escapeHtml(product.name)}</a></h3>
         <p class="notes">${escapeHtml(product.notes)}</p>

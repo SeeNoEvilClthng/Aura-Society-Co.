@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { requireAdmin } = require("../lib/admin-auth");
 
 const PRODUCT_KEY = "aura-society-products";
 const catalogPath = path.join(process.cwd(), "catalog", "products.json");
@@ -19,6 +20,10 @@ module.exports = async function handler(request, response) {
       const requestUrl = new URL(request.url, "http://localhost");
       const products = await readProducts();
       sendJson(response, 200, { products: shouldIncludeImages(requestUrl) ? products : stripProductImages(products) });
+      return;
+    }
+
+    if (!(await requireAdmin(request, (statusCode, data) => sendJson(response, statusCode, data)))) {
       return;
     }
 
@@ -69,6 +74,10 @@ module.exports = async function handler(request, response) {
     sendJson(response, 500, { error: error.message || "Products could not save." });
   }
 };
+
+// Shared with the server-rendered storefront pages and sitemap (api/page.js, api/seo.js).
+module.exports.readProducts = readProducts;
+module.exports.readCatalogProducts = readCatalogProducts;
 
 async function readProducts() {
   if (hasSupabaseConfig()) {
@@ -444,7 +453,7 @@ function clampInteger(value, min, max) {
 function applyCors(response) {
   response.setHeader("Access-Control-Allow-Origin", "*");
   response.setHeader("Access-Control-Allow-Methods", "GET, HEAD, PUT, POST, DELETE, OPTIONS");
-  response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 }
 
 function sendJson(response, statusCode, data) {

@@ -137,7 +137,7 @@ function renderCollectionPage() {
   document.querySelector("#collectionTitle").textContent = collection;
   document.querySelector("#collectionDescription").textContent = visible.length
     ? `Shop ${visible.length} fragrance${visible.length === 1 ? "" : "s"} from ${collection}.`
-    : "This collection is ready for your first fragrance upload in the admin portal.";
+    : "New fragrances are coming to this collection soon.";
   document.querySelector("#collectionProductTitle").textContent = collection;
   productGrid.innerHTML = visible.length ? productCards(visible) : '<div class="empty-state">No fragrances in this collection yet.</div>';
   bindAddToBag(productGrid);
@@ -171,6 +171,11 @@ function renderProductPage() {
       </div>
       <button class="primary-button product-add" type="button" data-add="${escapeAttribute(product.id)}">Add to bag</button>
       <a class="secondary-button product-checkout" href="checkout.html">Go to checkout</a>
+      <ul class="trust-list">
+        <li>100% authentic bottle</li>
+        <li>Free standard shipping on orders $100+</li>
+        <li>Secure checkout with Stripe</li>
+      </ul>
     </div>
   `;
 
@@ -287,7 +292,7 @@ function productCards(entries) {
       <div class="product-info">
         <div class="product-meta">
           <span>${escapeHtml(product.brand)}</span>
-          <span>Star 5.0</span>
+          <span>100% Authentic</span>
         </div>
         <h3><a href="product.html?id=${encodeURIComponent(product.id)}">${escapeHtml(product.name)}</a></h3>
         <p class="notes">${escapeHtml(product.notes)}</p>

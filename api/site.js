@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { requireAdmin } = require("../lib/admin-auth");
 
 const SITE_KEY = "aura-society-site";
 const catalogPath = path.join(process.cwd(), "catalog", "site.json");
@@ -43,6 +44,10 @@ module.exports = async function handler(request, response) {
     }
 
     if (request.method === "PUT") {
+      if (!(await requireAdmin(request, (statusCode, data) => sendJson(response, statusCode, data)))) {
+        return;
+      }
+
       const payload = await readPayload(request);
       const site = normalizeSite(payload.site || payload);
       await writeSite(site);
@@ -266,7 +271,7 @@ function sanitize(value, maxLength) {
 function applyCors(response) {
   response.setHeader("Access-Control-Allow-Origin", "*");
   response.setHeader("Access-Control-Allow-Methods", "GET, HEAD, PUT, OPTIONS");
-  response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 }
 
 function sendJson(response, statusCode, data) {

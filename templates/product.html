@@ -3,21 +3,19 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Collections | Aura Society Co.</title>
-    <meta name="description" content="Shop Aura Society Co. fragrance collections.">
+    <title>Product | Aura Society Co.</title>
+    <meta name="description" content="Aura Society Co. fragrance product page.">
     <link rel="stylesheet" href="styles.css">
   </head>
-  <body data-page="collections">
+  <body data-page="product">
     <div id="topBanner" class="top-banner">Free standard shipping on fragrance orders $100+ USD</div>
     <header class="site-header retail-header">
       <a class="brand" href="index.html" aria-label="Aura Society Co. home">
         <img class="brand-logo" src="assets/branding/aura-society-logo.png" alt="Aura Society Co.">
       </a>
       <nav class="nav-actions retail-nav" aria-label="Primary navigation">
-        <a href="collections.html">New Arrivals</a>
-        <a href="collections.html">Best Sellers</a>
         <a href="collections.html">Collections</a>
-        <a href="admin.html">Admin</a>
+        <a href="checkout.html">Checkout</a>
       </nav>
       <div class="header-tools">
         <button class="header-search search-open" type="button" aria-haspopup="dialog" aria-controls="siteSearchOverlay">
@@ -29,22 +27,13 @@
     </header>
 
     <main>
-      <section class="page-hero">
-        <p class="hero-kicker">Shop by mood</p>
-        <h1>Collections</h1>
-        <p>Browse every Aura Society Co. fragrance collection, then open a collection page to shop its scents.</p>
-      </section>
-      <section class="retail-section">
-        <div id="collectionGrid" class="promo-grid"></div>
-      </section>
+      <section id="productDetail" class="product-detail"></section>
       <section class="retail-section product-section">
         <div class="retail-section-head">
-          <h2>All Fragrances</h2>
-          <select id="familyFilter" class="control-input" aria-label="Filter by scent family">
-            <option value="all">All families</option>
-          </select>
+          <h2>More Scents</h2>
+          <a href="collections.html">Shop all</a>
         </div>
-        <div id="productGrid" class="product-grid retail-product-grid"></div>
+        <div id="relatedGrid" class="product-grid retail-product-grid"></div>
       </section>
     </main>
 

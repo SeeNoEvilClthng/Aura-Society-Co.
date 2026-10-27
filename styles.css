@@ -1189,6 +1189,52 @@ h3 {
   text-transform: uppercase;
 }
 
+.trust-band {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 18px clamp(18px, 3vw, 44px);
+  background: #f4f4f4;
+  border-bottom: 1px solid #dedede;
+  text-align: center;
+}
+
+.trust-band p {
+  margin: 0;
+  color: #333333;
+  font-size: 0.9rem;
+}
+
+.trust-band strong {
+  display: block;
+  color: #050505;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.trust-list {
+  display: grid;
+  gap: 6px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  color: #333333;
+  font-weight: 700;
+}
+
+.trust-list li::before {
+  content: "\2713";
+  margin-right: 8px;
+  color: #050505;
+}
+
+@media (max-width: 640px) {
+  .trust-band {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
 .retail-header {
   position: sticky;
   top: 0;

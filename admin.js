@@ -1,6 +1,4 @@
 const AUTH_KEY = "auraSocietyAdminAuth";
-const ADMIN_USERNAME = "XThaBoss2";
-const ADMIN_PASSWORD = "ZaraAleah12!";
 const LOCAL_API_BASE = "http://localhost:4173";
 const LEGACY_PRODUCTS_KEY = "auraSocietyProducts";
 const LEGACY_MIGRATION_KEY = "auraSocietyProductsMigrated";
@@ -120,8 +118,39 @@ const syncCatalogButton = document.querySelector("#syncCatalogButton");
 const exportButton = document.querySelector("#exportButton");
 const toast = document.querySelector("#toast");
 
+// The server checks the username/password on every change; the browser only keeps
+// them for this tab so the admin does not have to re-enter them for each save.
+function getAuthHeader() {
+  try {
+    return sessionStorage.getItem(AUTH_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+function setAuthHeader(value) {
+  try {
+    if (value) sessionStorage.setItem(AUTH_KEY, value);
+    else sessionStorage.removeItem(AUTH_KEY);
+  } catch {
+    // Storage blocked: the admin will be asked to sign in again on reload.
+  }
+}
+
+function buildAuthHeader(username, password) {
+  const bytes = new TextEncoder().encode(`${username}:${password}`);
+  return `Basic ${btoa(String.fromCharCode(...bytes))}`;
+}
+
 function isAuthenticated() {
-  return localStorage.getItem(AUTH_KEY) === "true";
+  return Boolean(getAuthHeader());
+}
+
+function signOut(message) {
+  setAuthHeader("");
+  clearForm();
+  setAdminVisible(false);
+  if (message) showToast(message);
 }
 
 async function setAdminVisible(isVisible) {
@@ -290,6 +319,8 @@ async function requestJson(url, options) {
     try {
       return await fetchJson(candidate, options);
     } catch (error) {
+      // The server answered (e.g. wrong password); don't mask it by trying the next URL.
+      if (error.status) throw error;
       lastError = error;
     }
   }
@@ -297,8 +328,12 @@ async function requestJson(url, options) {
   throw lastError || new Error("Changes could not save.");
 }
 
-async function fetchJson(url, options) {
-  const response = await fetch(url, options);
+async function fetchJson(url, options = {}) {
+  const authHeader = getAuthHeader();
+  const headers = { ...(options.headers || {}) };
+  if (authHeader && !headers.Authorization) headers.Authorization = authHeader;
+
+  const response = await fetch(url, { ...options, headers });
   const contentType = response.headers.get("content-type") || "";
 
   if (!contentType.includes("application/json")) {
@@ -306,8 +341,13 @@ async function fetchJson(url, options) {
   }
 
   const data = await response.json();
+  if (response.status === 401 && authHeader && !options.isLoginCheck) {
+    signOut("Your admin session expired. Sign in again.");
+  }
   if (!response.ok) {
-    throw new Error(data.error || "Changes could not save.");
+    const error = new Error(data.error || "Changes could not save.");
+    error.status = response.status;
+    throw error;
   }
 
   return data;
@@ -483,32 +523,34 @@ function escapeAttribute(value) {
   return escapeHtml(value);
 }
 
-loginForm.addEventListener("submit", (event) => {
+loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  const username = adminUsername.value.trim();
-  const password = adminPassword.value;
+  const submitButton = loginForm.querySelector("button[type='submit']");
+  const authHeader = buildAuthHeader(adminUsername.value.trim(), adminPassword.value);
+  submitButton.disabled = true;
+  loginError.textContent = "";
 
-  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-    localStorage.setItem(AUTH_KEY, "true");
-    loginError.textContent = "";
+  try {
+    await requestJson("/api/admin-session", {
+      method: "POST",
+      headers: { Authorization: authHeader },
+      isLoginCheck: true
+    });
+    setAuthHeader(authHeader);
     loginForm.reset();
     setAdminVisible(true);
     showToast("Admin unlocked.");
-    return;
+  } catch (error) {
+    loginError.textContent = error.status === 401 ? "Username or password is incorrect." : error.message;
+    adminPassword.value = "";
+    adminPassword.focus();
+  } finally {
+    submitButton.disabled = false;
   }
-
-  loginError.textContent = "Username or password is incorrect.";
-  adminPassword.value = "";
-  adminPassword.focus();
 });
 
-logoutButton.addEventListener("click", () => {
-  localStorage.removeItem(AUTH_KEY);
-  clearForm();
-  setAdminVisible(false);
-  showToast("Logged out.");
-});
+logoutButton.addEventListener("click", () => signOut("Logged out."));
 
 productImage.addEventListener("change", () => {
   const file = productImage.files[0];
@@ -682,4 +724,6 @@ exportButton.addEventListener("click", () => {
   URL.revokeObjectURL(url);
 });
 
+// Old builds stored a plain "true" flag in localStorage; it no longer grants access.
+localStorage.removeItem(AUTH_KEY);
 setAdminVisible(isAuthenticated());

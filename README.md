@@ -39,6 +39,8 @@ Use the repository root as the Vercel project root. Leave the framework preset a
 
 Add these environment variables in Vercel Project Settings:
 
+- `ADMIN_USERNAME` and `ADMIN_PASSWORD`: Admin portal login. The server checks these on every product or homepage change; without them, saving is disabled. Use a long password you don't use anywhere else.
+
 - `STRIPE_SECRET_KEY`: Stripe secret key. Use `sk_test_...` first, then switch to live when ready.
 - `STRIPE_WEBHOOK_SECRET`: Stripe webhook signing secret for `/api/stripe-webhook`.
 - `STRIPE_PAYMENT_METHOD_CONFIGURATION`: Optional Stripe payment method configuration ID.
