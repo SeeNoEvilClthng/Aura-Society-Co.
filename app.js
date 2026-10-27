@@ -8,13 +8,13 @@ const currency = new Intl.NumberFormat("en-US", {
 
 const defaultSite = {
   topBanner: "Free standard shipping on fragrance orders $100+ USD",
-  navLinks: "New Arrivals, Best Sellers, Collections, Fragrance Oils, Gift Cards, Help",
-  heroKicker: "New fragrance drop",
-  heroTitle: "Aura Society Co. Signature Scents",
-  heroSubtitle: "A bold fragrance marketplace for elevated oils, extrait sprays, and daily signature scents.",
-  heroButton: "Shop the collection",
+  navLinks: "Shop All, Creed, Tom Ford, Parfums de Marly, Dior, Chanel, Help",
+  heroKicker: "100% authentic bottles",
+  heroTitle: "Authentic Designer & Niche Fragrances",
+  heroSubtitle: "Creed, Tom Ford, Parfums de Marly, Dior, Chanel and more. Free standard shipping on orders $100+.",
+  heroButton: "Shop all fragrances",
   featuredTitle: "Featured",
-  featuredLinks: "Signature Collection, Evening Reserve, Daily Rituals, Fragrance Oils",
+  featuredLinks: "Tom Ford, Creed, Parfums de Marly, Maison Francis Kurkdjian",
   collectionsTitle: "Collections",
   trendingTitle: "Trending",
   brandsTitle: "Scent Families",
@@ -22,10 +22,10 @@ const defaultSite = {
   vipTitle: "Become a VIP",
   vipText: "Subscribe to get early access to drops, exclusive offers, and fragrance restocks.",
   promoCards: [
-    { label: "Just arrived", title: "Signature Collection", button: "Shop now", image: "" },
-    { label: "Warm + bold", title: "Evening Reserve", button: "Shop now", image: "" },
-    { label: "Everyday wear", title: "Daily Rituals", button: "Shop now", image: "" },
-    { label: "Layer your aura", title: "Fragrance Oils", button: "Shop now", image: "" }
+    { label: "Warm + bold", title: "Amber", button: "Shop now", image: "" },
+    { label: "Clean + bright", title: "Fresh", button: "Shop now", image: "" },
+    { label: "Soft + romantic", title: "Floral", button: "Shop now", image: "" },
+    { label: "Deep + smooth", title: "Woody", button: "Shop now", image: "" }
   ]
 };
 
@@ -164,26 +164,60 @@ function renderSite() {
   renderFamilyTiles();
 }
 
+// Homepage links can name collections the store doesn't carry; those are dropped
+// (or replaced) so shoppers never land on an empty "coming soon" page.
 function renderNav() {
-  const links = splitList(site.navLinks);
-  primaryNav.innerHTML = links.map((label) => `<a href="${escapeAttribute(navHref(label))}">${escapeHtml(label)}</a>`).join("");
+  const links = splitList(site.navLinks)
+    .map((label) => ({ label, href: navHref(label) }))
+    .filter((link) => link.href);
+  primaryNav.innerHTML = links.map((link) => `<a href="${escapeAttribute(link.href)}">${escapeHtml(link.label)}</a>`).join("");
 }
 
 function renderHeroPanels() {
-  const heroProducts = products.slice(0, 3);
   heroPanels.innerHTML = [0, 1, 2].map((index) => {
-    const product = heroProducts[index];
+    const product = heroProducts()[index];
     return `
       <div class="hero-panel">
         ${productImage(product, "hero")}
-        <span>${escapeHtml(product?.collection || product?.family || "Aura Society Co.")}</span>
+        <span>${escapeHtml(product?.brand || product?.collection || "Aura Society Co.")}</span>
       </div>
     `;
   }).join("");
 }
 
+// Three in-stock bottles from different brands, most premium first.
+function heroProducts() {
+  const seenBrands = new Set();
+  return [...products]
+    .filter((product) => (product.thumb || product.image) && Number(product.stock) !== 0)
+    .sort((a, b) => Number(b.price) - Number(a.price))
+    .filter((product) => {
+      const brand = normalizeCollectionKey(product.brand);
+      if (seenBrands.has(brand)) return false;
+      seenBrands.add(brand);
+      return true;
+    })
+    .slice(0, 3);
+}
+
+function topBrands() {
+  const counts = new Map();
+  products.forEach((product) => {
+    if (product.brand) counts.set(product.brand, (counts.get(product.brand) || 0) + 1);
+  });
+  return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([brand]) => brand);
+}
+
+function fillLabels(labels, extras, count) {
+  const result = labels.filter((label) => matchingProducts(label).length);
+  extras.forEach((label) => {
+    if (result.length < count && !result.some((entry) => sameCollection(entry, label))) result.push(label);
+  });
+  return result.slice(0, count);
+}
+
 function renderFeaturedTiles() {
-  const links = splitList(site.featuredLinks).slice(0, 4);
+  const links = fillLabels(splitList(site.featuredLinks), topBrands(), 4);
   featuredTiles.innerHTML = links.map((label, index) => {
     const product = matchingProducts(label)[0] || products[index];
     return `
@@ -196,7 +230,16 @@ function renderFeaturedTiles() {
 }
 
 function renderPromoGrid() {
-  promoGrid.innerHTML = site.promoCards.slice(0, 4).map((card, index) => {
+  const families = [...new Set(products.map((product) => product.family).filter(Boolean))]
+    .sort((a, b) => matchingProducts(b).length - matchingProducts(a).length);
+  const cards = site.promoCards.filter((card) => matchingProducts(card.title).length);
+  families.forEach((family) => {
+    if (cards.length < 4 && !cards.some((card) => sameCollection(card.title, family))) {
+      cards.push({ label: `${matchingProducts(family).length} fragrances`, title: family, button: "Shop now", image: "" });
+    }
+  });
+
+  promoGrid.innerHTML = cards.slice(0, 4).map((card, index) => {
     const product = matchingProducts(card.title)[0] || products[index];
     return `
       <a class="promo-card" href="${escapeAttribute(collectionHref(card.title))}">
@@ -498,12 +541,9 @@ function splitList(value) {
 
 function navHref(label) {
   const normalized = String(label || "").toLowerCase();
-  if (normalized.includes("collection") || normalized.includes("new") || normalized.includes("seller") || normalized.includes("oil")) {
-    return "collections.html";
-  }
-  if (normalized.includes("help")) return "mailto:support@aurasocietyco.com";
-  if (normalized.includes("gift")) return "collections.html";
-  return "collections.html";
+  if (/help|faq|contact|shipping|return/.test(normalized)) return "help.html";
+  if (/shop all|all fragrances|collections|new arrivals|best sellers/.test(normalized)) return "collections.html";
+  return matchingProducts(label).length ? collectionHref(label) : "";
 }
 
 function collectionHref(label) {

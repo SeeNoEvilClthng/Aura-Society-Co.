@@ -6,6 +6,7 @@ const { requireAdmin } = require("./lib/admin-auth");
 const { stripProductImages } = require("./lib/product-images");
 const subscribeHandler = require("./api/subscribe");
 const reviewsHandler = require("./api/reviews");
+const contactHandler = require("./api/contact");
 const { listReviews } = require("./lib/reviews");
 
 loadEnv();
@@ -66,13 +67,13 @@ const sampleProducts = [
 
 const defaultSite = {
   topBanner: "Free standard shipping on fragrance orders $100+ USD",
-  navLinks: "New Arrivals, Best Sellers, Collections, Fragrance Oils, Gift Cards, Help",
-  heroKicker: "New fragrance drop",
-  heroTitle: "Aura Society Co. Signature Scents",
-  heroSubtitle: "A bold fragrance marketplace for elevated oils, extrait sprays, and daily signature scents.",
-  heroButton: "Shop the collection",
+  navLinks: "Shop All, Creed, Tom Ford, Parfums de Marly, Dior, Chanel, Help",
+  heroKicker: "100% authentic bottles",
+  heroTitle: "Authentic Designer & Niche Fragrances",
+  heroSubtitle: "Creed, Tom Ford, Parfums de Marly, Dior, Chanel and more. Free standard shipping on orders $100+.",
+  heroButton: "Shop all fragrances",
   featuredTitle: "Featured",
-  featuredLinks: "Signature Collection, Evening Reserve, Daily Rituals, Fragrance Oils",
+  featuredLinks: "Tom Ford, Creed, Parfums de Marly, Maison Francis Kurkdjian",
   collectionsTitle: "Collections",
   trendingTitle: "Trending",
   brandsTitle: "Scent Families",
@@ -80,10 +81,10 @@ const defaultSite = {
   vipTitle: "Become a VIP",
   vipText: "Subscribe to get early access to drops, exclusive offers, and fragrance restocks.",
   promoCards: [
-    { label: "Just arrived", title: "Signature Collection", button: "Shop now", image: "" },
-    { label: "Warm + bold", title: "Evening Reserve", button: "Shop now", image: "" },
-    { label: "Everyday wear", title: "Daily Rituals", button: "Shop now", image: "" },
-    { label: "Layer your aura", title: "Fragrance Oils", button: "Shop now", image: "" }
+    { label: "Warm + bold", title: "Amber", button: "Shop now", image: "" },
+    { label: "Clean + bright", title: "Fresh", button: "Shop now", image: "" },
+    { label: "Soft + romantic", title: "Floral", button: "Shop now", image: "" },
+    { label: "Deep + smooth", title: "Woody", button: "Shop now", image: "" }
   ]
 };
 
@@ -121,6 +122,11 @@ const server = http.createServer(async (request, response) => {
 
     if (requestUrl.pathname === "/api/subscribe") {
       await subscribeHandler(request, response);
+      return;
+    }
+
+    if (requestUrl.pathname === "/api/contact") {
+      await contactHandler(request, response);
       return;
     }
 

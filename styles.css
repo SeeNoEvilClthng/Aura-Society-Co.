@@ -1643,7 +1643,7 @@ h3 {
   padding: clamp(160px, 24vh, 280px) clamp(18px, 5vw, 70px) clamp(44px, 7vh, 78px);
   color: #ffffff;
   text-align: center;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.68));
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.5) 45%, rgba(0, 0, 0, 0.88) 100%);
 }
 
 .hero-mark {
@@ -1662,9 +1662,9 @@ h3 {
 }
 
 .drop-hero h1 {
-  width: min(100%, 900px);
+  width: min(100%, 1000px);
   margin: 0;
-  font-size: clamp(4rem, 10vw, 10rem);
+  font-size: clamp(3.4rem, 7.5vw, 7.6rem);
   line-height: 0.86;
   text-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
 }
@@ -1683,9 +1683,9 @@ h3 {
   min-width: 178px;
   min-height: 58px;
   padding: 0 24px;
-  border: 1px solid rgba(255, 255, 255, 0.44);
-  background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
+  border: 1px solid #f4d47b;
+  background: #f4d47b;
+  color: #050505;
   font-weight: 950;
   text-transform: uppercase;
   transition: background 180ms ease, transform 180ms ease, box-shadow 180ms ease;
@@ -3302,5 +3302,231 @@ button {
 
   .drop-hero h1 {
     font-size: clamp(2.4rem, 8vw, 5rem);
+  }
+}
+
+/* Help page */
+.help-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  padding-bottom: 0;
+}
+
+.help-card {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 20px;
+  border: 1px solid #e3e3e3;
+  background: #ffffff;
+  color: #050505;
+  text-decoration: none;
+  transition: border-color 180ms ease, transform 180ms ease;
+}
+
+.help-card:hover {
+  border-color: #050505;
+  transform: translateY(-2px);
+}
+
+.help-card strong {
+  font-size: 1.05rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.help-card span {
+  color: #555555;
+}
+
+.help-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(300px, 1fr);
+  gap: clamp(28px, 5vw, 70px);
+  align-items: start;
+}
+
+.help-faq h2,
+.help-contact h2 {
+  margin: 34px 0 12px;
+  font-size: clamp(1.8rem, 3.2vw, 2.6rem);
+  line-height: 1;
+  scroll-margin-top: 24px;
+}
+
+.help-faq h2:first-child,
+.help-contact h2 {
+  margin-top: 0;
+}
+
+.help-faq p,
+.help-contact > p {
+  margin: 0 0 12px;
+  line-height: 1.6;
+}
+
+.help-table {
+  display: grid;
+  margin-bottom: 14px;
+  border: 1px solid #e3e3e3;
+}
+
+.help-table div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+}
+
+.help-table div + div {
+  border-top: 1px solid #e3e3e3;
+}
+
+.help-table strong {
+  margin-right: 6px;
+}
+
+.help-faq details {
+  border-bottom: 1px solid #e3e3e3;
+  scroll-margin-top: 24px;
+}
+
+.help-faq summary {
+  padding: 16px 0;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.help-faq details p {
+  margin: 0 0 16px;
+}
+
+.help-contact {
+  position: sticky;
+  top: 20px;
+  padding: clamp(20px, 3vw, 32px);
+  background: #050505;
+  color: #ffffff;
+  scroll-margin-top: 24px;
+}
+
+.contact-form {
+  display: grid;
+  gap: 14px;
+}
+
+.contact-form label {
+  display: grid;
+  gap: 6px;
+  font-weight: 850;
+}
+
+.contact-form small {
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.contact-form textarea {
+  resize: vertical;
+  font: inherit;
+}
+
+.contact-status {
+  min-height: 1.4em;
+  margin: 0;
+}
+
+.contact-status.is-success {
+  color: #f4d47b;
+}
+
+.contact-status.is-error {
+  color: #ff9b87;
+}
+
+@media (max-width: 860px) {
+  .help-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .help-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .help-contact {
+    position: static;
+  }
+
+  .help-table div {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+/* Keep promo card titles readable over light product photos. */
+.promo-card::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 1;
+  height: 70%;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.88));
+  pointer-events: none;
+}
+
+.promo-copy h3 {
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+}
+
+/* Four promo cards in three columns leave one orphan; use two columns instead. */
+@media (max-width: 1180px) and (min-width: 761px) {
+  .promo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow-x: visible;
+  }
+
+  .promo-card {
+    min-width: 0;
+  }
+}
+
+/* Phones: bag sits beside the logo instead of on its own row. */
+@media (max-width: 760px) {
+  .retail-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "brand cart"
+      "nav nav"
+      "search search";
+    align-items: center;
+    gap: 10px 12px;
+  }
+
+  .retail-header .brand {
+    grid-area: brand;
+  }
+
+  .retail-header .retail-nav {
+    grid-area: nav;
+  }
+
+  .retail-header .header-tools {
+    display: contents;
+  }
+
+  .retail-header .header-search {
+    grid-area: search;
+  }
+
+  .retail-header .cart-toggle,
+  .retail-header .header-checkout {
+    grid-area: cart;
+    justify-self: end;
+  }
+
+  .page-hero {
+    min-height: 0;
   }
 }

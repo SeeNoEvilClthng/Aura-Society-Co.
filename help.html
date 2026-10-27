@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Help, Shipping &amp; FAQ | Aura Society Co.</title>
+    <meta name="description" content="Shipping rates and times, payment options, authenticity, and answers to common questions about ordering from Aura Society Co. Send us a message anytime.">
+    <link rel="canonical" href="https://www.aurasociety.co/help.html">
+    <link rel="stylesheet" href="styles.css?v=help-20261027">
+  </head>
+  <body data-page="help">
+    <div id="topBanner" class="top-banner">Free standard shipping on fragrance orders $100+ USD</div>
+    <header class="site-header retail-header">
+      <a class="brand" href="index.html" aria-label="Aura Society Co. home">
+        <img class="brand-logo" src="assets/branding/aura-society-logo.png" alt="Aura Society Co.">
+      </a>
+      <nav class="nav-actions retail-nav" aria-label="Primary navigation">
+        <a href="collections.html">Shop All</a>
+        <a href="collection.html?collection=Creed">Creed</a>
+        <a href="collection.html?collection=Tom%20Ford">Tom Ford</a>
+        <a href="collection.html?collection=Parfums%20de%20Marly">Parfums de Marly</a>
+        <a href="help.html">Help</a>
+      </nav>
+      <div class="header-tools">
+        <button class="header-search search-open" type="button" aria-haspopup="dialog" aria-controls="siteSearchOverlay">
+          <span aria-hidden="true">Search</span>
+          <strong>Search fragrances</strong>
+        </button>
+        <a class="header-checkout" href="checkout.html">Bag <span id="cartCount">0</span></a>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-hero">
+        <p class="hero-kicker">We're here to help</p>
+        <h1>Help &amp; FAQ</h1>
+        <p>Shipping, payments, authenticity, and everything else about your order. Can't find an answer? Send us a message below.</p>
+      </section>
+
+      <section class="retail-section help-cards" aria-label="Quick answers">
+        <a class="help-card" href="#shipping">
+          <strong>Shipping</strong>
+          <span>Free standard shipping on orders $100+</span>
+        </a>
+        <a class="help-card" href="#authentic">
+          <strong>Authenticity</strong>
+          <span>Every bottle is 100% authentic</span>
+        </a>
+        <a class="help-card" href="#payments">
+          <strong>Payments</strong>
+          <span>Cards, Apple Pay, PayPal, and more</span>
+        </a>
+        <a class="help-card" href="#contact">
+          <strong>Contact us</strong>
+          <span>Send a message to a real person</span>
+        </a>
+      </section>
+
+      <section class="retail-section help-layout">
+        <div class="help-faq">
+          <h2 id="shipping">Shipping</h2>
+          <div class="help-table" role="table" aria-label="Shipping options">
+            <div role="row"><span role="cell"><strong>Standard</strong> 3-7 business days</span><span role="cell">$10.00, free on orders $100+</span></div>
+            <div role="row"><span role="cell"><strong>Express</strong> 1-3 business days</span><span role="cell">$15.00</span></div>
+          </div>
+          <p>We currently ship within the United States. You choose your shipping speed at checkout, and the order total updates before you pay.</p>
+
+          <h2 id="authentic">Authenticity</h2>
+          <p>Every fragrance we sell is a 100% authentic designer or niche bottle. We never sell replicas or dupes.</p>
+
+          <h2 id="payments">Payments</h2>
+          <p>Checkout is handled securely by Stripe. Depending on your device and location you can pay with a credit or debit card, Apple Pay, Google Pay, PayPal, Cash App Pay, or Link. We never see or store your card number.</p>
+
+          <h2 id="faq">Frequently asked questions</h2>
+          <details>
+            <summary>Where do I enter a discount or VIP code?</summary>
+            <p>Continue to checkout and enter your code on the secure payment page, right under your order summary.</p>
+          </details>
+          <details>
+            <summary>How do I get free shipping?</summary>
+            <p>Standard shipping is free when your bag totals $100 or more. Your bag shows how much more you need, along with bottles that would get you there.</p>
+          </details>
+          <details>
+            <summary>Can I change or cancel my order?</summary>
+            <p>Send us a message as soon as possible with the email you used at checkout, and we'll do our best to help before your order ships.</p>
+          </details>
+          <details id="returns">
+            <summary>What about returns and exchanges?</summary>
+            <p>Send us a message with your order details and what went wrong, and we'll work it out with you.</p>
+          </details>
+          <details>
+            <summary>How do I pick a scent I've never smelled?</summary>
+            <p>Start with the scent family you already like: fresh and citrus scents feel clean and light, floral scents are soft and romantic, while amber and woody scents are warm, deep, and long-lasting. Each product page lists the key notes. You can also message us with fragrances you love and we'll suggest a few.</p>
+          </details>
+          <details>
+            <summary>Can I leave a review?</summary>
+            <p>Yes. After your order you'll get a link to review what you bought. Only verified buyers can leave reviews.</p>
+          </details>
+        </div>
+
+        <div class="help-contact" id="contact">
+          <h2>Send us a message</h2>
+          <p>A real person reads every message and replies by email.</p>
+          <form id="contactForm" class="contact-form" novalidate>
+            <label>Name<input class="input" name="name" autocomplete="name" required maxlength="80"></label>
+            <label>Email<input class="input" name="email" type="email" autocomplete="email" required maxlength="160"></label>
+            <label>Order number or checkout email <small>(optional)</small><input class="input" name="order" maxlength="80"></label>
+            <label>Topic
+              <select class="input" name="topic">
+                <option>Order question</option>
+                <option>Shipping</option>
+                <option>Returns or exchanges</option>
+                <option>Product question</option>
+                <option>Other</option>
+              </select>
+            </label>
+            <label>Message<textarea class="input" name="message" rows="6" required maxlength="4000"></textarea></label>
+            <input class="vip-trap" name="website" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <button class="primary-button" type="submit">Send message</button>
+            <p id="contactStatus" class="contact-status" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="siteSearchOverlay" class="site-search-overlay" role="dialog" aria-modal="true" aria-labelledby="siteSearchTitle" aria-hidden="true">
+      <div class="site-search-panel">
+        <div class="site-search-head">
+          <h2 id="siteSearchTitle">Search Keyword</h2>
+          <button class="site-search-close" type="button" aria-label="Close search">Close</button>
+        </div>
+        <label class="site-search-field">
+          <span>Search</span>
+          <input id="siteSearchInput" type="search" placeholder="Search for a fragrance, note, collection">
+        </label>
+        <div id="siteSearchResults" class="site-search-results"></div>
+      </div>
+    </div>
+    <script src="pages.js?v=help-20261027"></script>
+    <script src="search.js?v=help-20261027"></script>
+    <script src="help.js?v=help-20261027"></script>
+  </body>
+</html>
