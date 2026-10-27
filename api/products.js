@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { requireAdmin } = require("../lib/admin-auth");
+const { stripProductImages } = require("../lib/product-images");
 
 const PRODUCT_KEY = "aura-society-products";
 const catalogPath = path.join(process.cwd(), "catalog", "products.json");
@@ -24,7 +25,14 @@ module.exports = async function handler(request, response) {
         console.error("Product storage unavailable, using bundled catalog:", error.message);
         return readCatalogProducts();
       });
-      sendJson(response, 200, { products: shouldIncludeImages(requestUrl) ? products : stripProductImages(products) });
+      if (shouldIncludeImages(requestUrl)) {
+        sendJson(response, 200, { products });
+        return;
+      }
+
+      // The shopper list is the same for everyone, so let Vercel's CDN serve it for a minute.
+      response.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=600");
+      sendJson(response, 200, { products: stripProductImages(products) });
       return;
     }
 
@@ -209,10 +217,6 @@ function readCatalogProducts() {
 
 function shouldIncludeImages(requestUrl) {
   return requestUrl.searchParams.get("images") !== "0";
-}
-
-function stripProductImages(products) {
-  return products.map(({ image, ...product }) => product);
 }
 
 function mergeCatalogProducts(products, catalogProducts) {

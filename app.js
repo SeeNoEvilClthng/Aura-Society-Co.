@@ -34,7 +34,6 @@ let products = [];
 let site = defaultSite;
 let activeCollection = "all";
 let cart = loadCart();
-let productImagesHydrated = false;
 let reviewSummary = {};
 
 const topBanner = document.querySelector("#topBanner");
@@ -93,7 +92,6 @@ async function loadStorefront() {
     renderCollectionTabs();
     renderProducts();
     renderCart();
-    hydrateProductImages();
     loadReviewSummary();
   } catch (error) {
     productGrid.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
@@ -109,44 +107,6 @@ async function fetchProducts() {
     const fallback = await requestJson("/catalog/products-lite.json");
     return Array.isArray(fallback) ? fallback : [];
   }
-}
-
-async function hydrateProductImages() {
-  if (productImagesHydrated) return;
-  productImagesHydrated = true;
-
-  try {
-    const data = await requestJson(`${API_BASE}/api/products?images=1`);
-    const fullProducts = Array.isArray(data.products) ? data.products : [];
-    if (!mergeProductImages(fullProducts)) return;
-
-    renderSite();
-    renderProducts();
-    renderCart();
-  } catch {
-    try {
-      const fullProducts = await requestJson("/catalog/products.json");
-      if (!mergeProductImages(Array.isArray(fullProducts) ? fullProducts : [])) return;
-
-      renderSite();
-      renderProducts();
-      renderCart();
-    } catch {
-      productImagesHydrated = false;
-    }
-  }
-}
-
-function mergeProductImages(fullProducts) {
-  const imagesById = new Map(fullProducts.filter((product) => product.image).map((product) => [product.id, product.image]));
-  let changed = false;
-  products = products.map((product) => {
-    const image = imagesById.get(product.id);
-    if (!image || product.image === image) return product;
-    changed = true;
-    return { ...product, image };
-  });
-  return changed;
 }
 
 async function fetchSite() {
@@ -292,10 +252,11 @@ function saveCart() {
 }
 
 function productImage(product, variant = "card") {
-  if (product?.image) {
+  const src = product?.thumb || product?.image;
+  if (src) {
     const loading = variant === "hero" ? "eager" : "lazy";
     const fetchPriority = variant === "hero" ? "high" : "auto";
-    return `<img src="${escapeAttribute(product.image)}" alt="${escapeAttribute(product.name)} fragrance" loading="${loading}" decoding="async" fetchpriority="${fetchPriority}">`;
+    return `<img src="${escapeAttribute(src)}" alt="${escapeAttribute(product.name)} fragrance" loading="${loading}" decoding="async" fetchpriority="${fetchPriority}">`;
   }
 
   const label = product?.name?.charAt(0) || "A";

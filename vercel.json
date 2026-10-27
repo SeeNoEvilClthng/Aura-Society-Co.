@@ -1,8 +1,15 @@
 {
   "functions": {
     "api/page.js": { "includeFiles": "templates/**" },
-    "api/create-checkout-session.js": { "includeFiles": "catalog/products.json" }
+    "api/create-checkout-session.js": { "includeFiles": "catalog/products.json" },
+    "api/products.js": { "includeFiles": "assets/products/manifest.json" }
   },
+  "headers": [
+    {
+      "source": "/assets/products/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    }
+  ],
   "rewrites": [
     { "source": "/", "destination": "/api/page?page=index" },
     { "source": "/index.html", "destination": "/api/page?page=index" },

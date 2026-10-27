@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const seo = require("./lib/seo");
 const { requireAdmin } = require("./lib/admin-auth");
+const { stripProductImages } = require("./lib/product-images");
 const subscribeHandler = require("./api/subscribe");
 const reviewsHandler = require("./api/reviews");
 const { listReviews } = require("./lib/reviews");
@@ -580,10 +581,6 @@ function normalizePromoCards(cards) {
 
 function shouldIncludeImages(requestUrl) {
   return requestUrl.searchParams.get("images") !== "0";
-}
-
-function stripProductImages(products) {
-  return products.map(({ image, ...product }) => product);
 }
 
 function dedupeProducts(products) {
