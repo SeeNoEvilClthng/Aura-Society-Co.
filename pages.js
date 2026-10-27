@@ -83,7 +83,7 @@ function ratingBadge(productId) {
 
 function currentProduct() {
   const id = new URLSearchParams(window.location.search).get("id");
-  return products.find((entry) => entry.id === id) || products[0];
+  return products.find((entry) => entry.id === id);
 }
 
 async function fetchProducts() {
@@ -173,14 +173,26 @@ function renderCollectionPage() {
 function renderProductPage() {
   const params = new URLSearchParams(window.location.search);
   const id = params.get("id");
-  const product = products.find((entry) => entry.id === id) || products[0];
+  const product = products.find((entry) => entry.id === id);
   const detail = document.querySelector("#productDetail");
   const relatedGrid = document.querySelector("#relatedGrid");
 
+  // An old or mistyped link used to show a different bottle; say so and suggest others.
   if (!product) {
-    detail.innerHTML = '<div class="empty-state">No product found.</div>';
+    detail.innerHTML = `
+      <div class="empty-state product-missing">
+        <h1>This fragrance isn't available</h1>
+        <p>It may have sold out or been removed. Here are a few others you might like.</p>
+        <a class="primary-button" href="collections.html">Shop all fragrances</a>
+      </div>
+    `;
+    relatedGrid.innerHTML = productCards(products.filter(inStock).slice(0, 4));
+    bindAddToBag(relatedGrid);
     return;
   }
+
+  const soldOut = !inStock(product);
+  const toFreeShipping = FREE_SHIPPING_THRESHOLD - Number(product.price);
 
   document.title = `${product.name} | Aura Society Co.`;
   detail.innerHTML = `
@@ -191,13 +203,14 @@ function renderProductPage() {
       ${reviewSummary[product.id]?.count ? `<a class="rating-line" href="#productReviews">${starsMarkup(reviewSummary[product.id].average)} ${reviewSummary[product.id].average.toFixed(1)} (${reviewSummary[product.id].count} review${reviewSummary[product.id].count === 1 ? "" : "s"})</a>` : ""}
       <p class="product-detail-brand">${escapeHtml(product.brand)} | ${escapeHtml(product.size)}</p>
       <p class="product-detail-price">${currency.format(product.price)}</p>
+      <p class="shipping-hint">${toFreeShipping <= 0 ? "Ships free with standard shipping" : `Add ${currency.format(toFreeShipping)} more to your bag for free shipping`}</p>
       <p>${escapeHtml(product.description)}</p>
       <p class="notes">${escapeHtml(product.notes)}</p>
       <div class="payment-methods">
         <span>${escapeHtml(product.family)}</span>
         <span>${escapeHtml(product.collection || "Aura Society Co.")}</span>
       </div>
-      <button class="primary-button product-add" type="button" data-add="${escapeAttribute(product.id)}">Add to bag</button>
+      <button class="primary-button product-add" type="button" data-add="${escapeAttribute(product.id)}" ${soldOut ? "disabled" : ""}>${soldOut ? "Sold out" : "Add to bag"}</button>
       <a class="secondary-button product-checkout" href="checkout.html">Go to checkout</a>
       <ul class="trust-list">
         <li>100% authentic bottle</li>
@@ -207,11 +220,32 @@ function renderProductPage() {
     </div>
   `;
 
-  const related = products.filter((entry) => entry.id !== product.id && entry.collection === product.collection).slice(0, 4);
-  relatedGrid.innerHTML = productCards(related.length ? related : products.filter((entry) => entry.id !== product.id).slice(0, 4));
+  relatedGrid.innerHTML = productCards(relatedProducts(product, 4));
   bindAddToBag(detail);
   bindAddToBag(relatedGrid);
-  renderStickyAdd(product, detail.querySelector(".product-add"));
+  if (soldOut) {
+    document.querySelector("#stickyAdd")?.remove();
+  } else {
+    renderStickyAdd(product, detail.querySelector(".product-add"));
+  }
+}
+
+function inStock(product) {
+  return Number(product.stock) !== 0;
+}
+
+// Same scent family first (what the shopper is drawn to), then same brand, then
+// whatever is closest in price, so "More scents" is never just the first four products.
+function relatedProducts(product, limit) {
+  const price = Number(product.price) || 0;
+  const score = (entry) =>
+    (entry.family && entry.family === product.family ? 0 : 2) +
+    (entry.brand && entry.brand === product.brand ? 0 : 1);
+
+  return products
+    .filter((entry) => entry.id !== product.id && inStock(entry))
+    .sort((a, b) => score(a) - score(b) || Math.abs(Number(a.price) - price) - Math.abs(Number(b.price) - price))
+    .slice(0, limit);
 }
 
 // On phones the header and photo push "Add to bag" well below the first screen, so keep a
@@ -437,7 +471,7 @@ function productCards(entries) {
         </div>
         <div class="price-row">
           <span class="price">${currency.format(product.price)}</span>
-          <button class="primary-button" type="button" data-add="${escapeAttribute(product.id)}">Add to bag</button>
+          <button class="primary-button" type="button" data-add="${escapeAttribute(product.id)}" ${inStock(product) ? "" : "disabled"}>${inStock(product) ? "Add to bag" : "Sold out"}</button>
         </div>
       </div>
     </article>
@@ -470,7 +504,7 @@ function bindAddToBag(container) {
 
 function addToCart(productId) {
   const product = products.find((entry) => entry.id === productId);
-  if (!product) return;
+  if (!product || !inStock(product)) return;
 
   const existing = cart.find((item) => item.id === productId);
   if (existing) {

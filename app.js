@@ -363,8 +363,8 @@ function renderProducts() {
         </div>
         <div class="price-row">
           <span class="price">${currency.format(product.price)}</span>
-          <button class="primary-button" type="button" data-add="${escapeAttribute(product.id)}">
-            Add to bag
+          <button class="primary-button" type="button" data-add="${escapeAttribute(product.id)}" ${Number(product.stock) === 0 ? "disabled" : ""}>
+            ${Number(product.stock) === 0 ? "Sold out" : "Add to bag"}
           </button>
         </div>
       </div>
@@ -482,7 +482,7 @@ function renderShippingProgress(container, subtotal) {
 
 function addToCart(productId) {
   const product = products.find((entry) => entry.id === productId);
-  if (!product) return;
+  if (!product || Number(product.stock) === 0) return;
 
   const existing = cart.find((item) => item.id === productId);
   if (existing) {
