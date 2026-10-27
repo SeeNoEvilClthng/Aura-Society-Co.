@@ -247,6 +247,37 @@ function renderProductPage() {
   relatedGrid.innerHTML = productCards(related.length ? related : products.filter((entry) => entry.id !== product.id).slice(0, 4));
   bindAddToBag(detail);
   bindAddToBag(relatedGrid);
+  renderStickyAdd(product, detail.querySelector(".product-add"));
+}
+
+// On phones the header and photo push "Add to bag" well below the first screen, so keep a
+// compact bar pinned to the bottom while the main button is out of view (CSS shows it <=760px).
+let stickyAddObserver = null;
+
+function renderStickyAdd(product, mainButton) {
+  let bar = document.querySelector("#stickyAdd");
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "stickyAdd";
+    bar.className = "sticky-add";
+    document.body.append(bar);
+    bindAddToBag(bar);
+  }
+
+  bar.innerHTML = `
+    <div>
+      <strong>${escapeHtml(product.name)}</strong>
+      <span>${currency.format(product.price)}</span>
+    </div>
+    <button class="primary-button" type="button" data-add="${escapeAttribute(product.id)}">Add to bag</button>
+  `;
+
+  stickyAddObserver?.disconnect();
+  if (!mainButton || !("IntersectionObserver" in window)) return;
+  stickyAddObserver = new IntersectionObserver(([entry]) => {
+    bar.classList.toggle("is-hidden", entry.isIntersecting);
+  });
+  stickyAddObserver.observe(mainButton);
 }
 
 function renderCheckoutPage() {

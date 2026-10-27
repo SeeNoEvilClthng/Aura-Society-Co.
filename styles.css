@@ -2873,6 +2873,68 @@ button {
   }
 }
 
+.sticky-add {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  body[data-page="product"] {
+    padding-bottom: 76px;
+  }
+
+  .sticky-add {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    border-top: 1px solid #dedede;
+    background: #ffffff;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease;
+  }
+
+  .sticky-add.is-hidden {
+    transform: translateY(110%);
+  }
+
+  .sticky-add div {
+    display: grid;
+    min-width: 0;
+  }
+
+  .sticky-add strong {
+    overflow: hidden;
+    font-size: 0.92rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sticky-add span {
+    font-weight: 800;
+  }
+
+  .sticky-add .primary-button {
+    flex-shrink: 0;
+    min-height: 46px;
+  }
+
+  body[data-page="product"] .toast {
+    bottom: 86px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sticky-add {
+    transition: none;
+  }
+}
+
 @media (max-width: 900px) {
   .retail-header {
     gap: 12px;
