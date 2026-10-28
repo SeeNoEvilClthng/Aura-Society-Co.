@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Collections | Aura Society Co.</title>
     <meta name="description" content="Shop Aura Society Co. fragrance collections.">
-    <link rel="stylesheet" href="styles.css?v=photos-20261027">
+    <link rel="stylesheet" href="styles.css?v=browse-20261027">
   </head>
   <body data-page="collections">
     <div id="topBanner" class="top-banner">Free standard shipping on fragrance orders $100+ USD</div>
@@ -31,21 +31,39 @@
 
     <main>
       <section class="page-hero">
-        <p class="hero-kicker">Shop by mood</p>
-        <h1>Collections</h1>
-        <p>Browse every Aura Society Co. fragrance collection, then open a collection page to shop its scents.</p>
+        <p class="hero-kicker">100% authentic bottles</p>
+        <h1>Shop All</h1>
+        <p>Browse by scent family or brand, or scroll every fragrance below.</p>
       </section>
-      <section class="retail-section">
-        <div id="collectionGrid" class="promo-grid"></div>
+      <section class="retail-section" aria-labelledby="familiesTitle">
+        <div class="retail-section-head">
+          <h2 id="familiesTitle">Shop by scent</h2>
+        </div>
+        <div id="familyGrid" class="promo-grid"></div>
+      </section>
+      <section class="retail-section" aria-labelledby="brandsTitle">
+        <div class="retail-section-head">
+          <h2 id="brandsTitle">Shop by brand</h2>
+        </div>
+        <nav id="collectionGrid" class="brand-list" aria-labelledby="brandsTitle"></nav>
       </section>
       <section class="retail-section product-section">
         <div class="retail-section-head">
           <h2>All Fragrances</h2>
-          <select id="familyFilter" class="control-input" aria-label="Filter by scent family">
-            <option value="all">All families</option>
-          </select>
+          <div class="shop-controls">
+            <select id="familyFilter" class="control-input" aria-label="Filter by scent family">
+              <option value="all">All families</option>
+            </select>
+            <select id="sortSelect" class="control-input" aria-label="Sort fragrances">
+              <option value="featured">Featured</option>
+              <option value="price-low">Price: low to high</option>
+              <option value="price-high">Price: high to low</option>
+              <option value="name">Name</option>
+            </select>
+          </div>
         </div>
         <div id="productGrid" class="product-grid retail-product-grid"></div>
+        <button id="showMoreProducts" class="secondary-button show-more" type="button" hidden>Show more</button>
       </section>
     </main>
 
@@ -63,7 +81,7 @@
         <div id="siteSearchResults" class="site-search-results"></div>
       </div>
     </div>
-    <script src="pages.js?v=listings-20261027"></script>
+    <script src="pages.js?v=browse-20261027"></script>
     <script src="search.js?v=photos-20261027"></script>
   </body>
 </html>

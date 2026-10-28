@@ -3557,3 +3557,81 @@ button {
 .product-missing p {
   margin: 0;
 }
+
+/* Collections page: compact brand list and "Show more" for long grids */
+.brand-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.brand-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 1px solid #d9d9d9;
+  background: #ffffff;
+  color: #050505;
+  font-weight: 900;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.brand-chip:hover {
+  border-color: #050505;
+  background: #f6f6f6;
+}
+
+.brand-chip small {
+  color: #777777;
+  font-weight: 700;
+}
+
+.show-more {
+  display: block;
+  min-width: 220px;
+  margin: 32px auto 0;
+}
+
+.show-more[hidden] {
+  display: none;
+}
+
+.retail-section-head .shop-controls a {
+  align-self: center;
+}
+
+/* Scent family cards on the collections page are a quick picker, not hero banners. */
+#familyGrid {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  overflow-x: visible;
+}
+
+#familyGrid .promo-card {
+  min-width: 0;
+  min-height: 280px;
+}
+
+#familyGrid .promo-copy h3 {
+  font-size: clamp(1.6rem, 2.4vw, 2.4rem);
+}
+
+@media (max-width: 760px) {
+  #familyGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  #familyGrid .promo-card {
+    min-height: 220px;
+  }
+
+  #familyGrid .promo-copy {
+    inset: auto 10px 16px;
+    gap: 8px;
+  }
+}

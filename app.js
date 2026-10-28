@@ -33,11 +33,15 @@ const API_BASE = getApiBase();
 let products = [];
 let site = defaultSite;
 let activeCollection = "all";
+// The shop grid shows a batch at a time instead of every product at once.
+const PRODUCT_BATCH = 12;
+let productLimit = PRODUCT_BATCH;
 let cart = loadCart();
 let reviewSummary = {};
 
 const topBanner = document.querySelector("#topBanner");
 const primaryNav = document.querySelector("#primaryNav");
+const showMoreProducts = document.querySelector("#showMoreProducts");
 const heroPanels = document.querySelector("#heroPanels");
 const heroKicker = document.querySelector("#heroKicker");
 const heroTitle = document.querySelector("#heroTitle");
@@ -344,10 +348,11 @@ function renderProducts() {
 
   if (!visibleProducts.length) {
     productGrid.innerHTML = '<div class="empty-state">No fragrances match your search.</div>';
+    renderShowMore(0);
     return;
   }
 
-  productGrid.innerHTML = visibleProducts.map((product) => `
+  productGrid.innerHTML = visibleProducts.slice(0, productLimit).map((product) => `
     <article class="product-card retail-product-card">
       <a class="product-image" href="product.html?id=${encodeURIComponent(product.id)}">${productImage(product)}</a>
       <div class="product-info">
@@ -370,6 +375,17 @@ function renderProducts() {
       </div>
     </article>
   `).join("");
+  renderShowMore(visibleProducts.length - productLimit);
+}
+
+function renderShowMore(remaining) {
+  showMoreProducts.hidden = remaining <= 0;
+  showMoreProducts.textContent = `Show ${Math.min(remaining, PRODUCT_BATCH)} more`;
+}
+
+function resetProductLimit() {
+  productLimit = PRODUCT_BATCH;
+  renderProducts();
 }
 
 function renderCart() {
@@ -609,7 +625,7 @@ collectionTabs.addEventListener("click", (event) => {
   event.preventDefault();
   activeCollection = button.dataset.collection;
   renderCollectionTabs();
-  renderProducts();
+  resetProductLimit();
 });
 
 cartItems.addEventListener("click", (event) => {
@@ -688,7 +704,12 @@ function getApiBase() {
 }
 
 [searchInput, familyFilter, sortSelect].forEach((control) => {
-  control.addEventListener("input", renderProducts);
+  control.addEventListener("input", resetProductLimit);
+});
+
+showMoreProducts.addEventListener("click", () => {
+  productLimit += PRODUCT_BATCH;
+  renderProducts();
 });
 
 loadStorefront();

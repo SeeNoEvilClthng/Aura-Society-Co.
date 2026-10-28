@@ -121,37 +121,85 @@ async function requestJson(url, options) {
 }
 
 function renderCollectionsPage() {
-  const collectionGrid = document.querySelector("#collectionGrid");
+  const familyGrid = document.querySelector("#familyGrid");
+  const brandList = document.querySelector("#collectionGrid");
   const productGrid = document.querySelector("#productGrid");
   const familyFilter = document.querySelector("#familyFilter");
+  const sortSelect = document.querySelector("#sortSelect");
   const selectedFamily = new URLSearchParams(window.location.search).get("family") || "all";
-  const collections = getCollections();
+  const countLabel = (count) => `${count} ${count === 1 ? "fragrance" : "fragrances"}`;
 
-  collectionGrid.innerHTML = collections.map((collection) => {
-    const collectionItems = collectionProducts(collection);
-    const product = collectionItems[0];
+  // Scent families get picture cards (biggest first); brands get a compact A-Z list.
+  const families = [...new Set(products.map((product) => product.family).filter(Boolean))]
+    .sort((a, b) => collectionProducts(b).length - collectionProducts(a).length);
+  familyGrid.innerHTML = families.map((family) => {
+    const familyItems = collectionProducts(family);
     return `
-      <a class="promo-card" href="${collectionHref(collection)}">
-        <div class="promo-media">${productImage(product, "tile")}</div>
+      <a class="promo-card" href="${collectionHref(family)}">
+        <div class="promo-media">${productImage(familyItems.find(inStock) || familyItems[0], "tile")}</div>
         <div class="promo-copy">
-          <span>${collectionItems.length} ${collectionItems.length === 1 ? "fragrance" : "fragrances"}</span>
-          <h3>${escapeHtml(collection)}</h3>
+          <span>${countLabel(familyItems.length)}</span>
+          <h3>${escapeHtml(family)}</h3>
           <strong class="primary-button">Shop now</strong>
         </div>
       </a>
     `;
   }).join("");
 
-  populateFamilies(familyFilter, selectedFamily);
-  const renderGrid = () => {
-    const family = familyFilter.value;
-    const visible = products.filter((product) => family === "all" || product.family === family);
-    productGrid.innerHTML = productCards(visible);
+  const brands = [...new Set(products.map((product) => product.brand).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b));
+  brandList.innerHTML = brands.map((brand) => `
+    <a class="brand-chip" href="${collectionHref(brand)}">${escapeHtml(brand)} <small>${collectionProducts(brand).length}</small></a>
+  `).join("");
+
+  if (familyFilter.dataset.bound !== "true") {
+    populateFamilies(familyFilter, selectedFamily);
+    familyFilter.dataset.bound = "true";
+    bindPagedGrid(productGrid, () => sortProducts(
+      products.filter((product) => familyFilter.value === "all" || product.family === familyFilter.value),
+      sortSelect.value
+    ), [familyFilter, sortSelect]);
+  }
+  productGrid.refreshPagedGrid();
+  bindAddToBag(productGrid);
+}
+
+// Long product grids show a batch at a time with a "Show more" button. getList returns the
+// filtered, sorted products; changing any of the controls starts again from the first batch.
+const PRODUCT_BATCH = 24;
+
+function bindPagedGrid(grid, getList, controls) {
+  const button = grid.parentElement.querySelector(".show-more");
+  let limit = PRODUCT_BATCH;
+
+  grid.refreshPagedGrid = () => {
+    const list = getList();
+    grid.innerHTML = list.length
+      ? productCards(list.slice(0, limit))
+      : '<div class="empty-state">No fragrances match.</div>';
+    if (button) {
+      const remaining = list.length - limit;
+      button.hidden = remaining <= 0;
+      button.textContent = `Show ${Math.min(remaining, PRODUCT_BATCH)} more`;
+    }
   };
 
-  familyFilter.addEventListener("input", renderGrid);
-  renderGrid();
-  bindAddToBag(productGrid);
+  controls.forEach((control) => control?.addEventListener("input", () => {
+    limit = PRODUCT_BATCH;
+    grid.refreshPagedGrid();
+  }));
+  button?.addEventListener("click", () => {
+    limit += PRODUCT_BATCH;
+    grid.refreshPagedGrid();
+  });
+}
+
+function sortProducts(list, sort) {
+  const sorted = [...list];
+  if (sort === "price-low") sorted.sort((a, b) => a.price - b.price);
+  if (sort === "price-high") sorted.sort((a, b) => b.price - a.price);
+  if (sort === "name") sorted.sort((a, b) => a.name.localeCompare(b.name));
+  return sorted;
 }
 
 function renderCollectionPage() {
@@ -165,8 +213,18 @@ function renderCollectionPage() {
   document.querySelector("#collectionDescription").textContent = visible.length
     ? `Shop ${visible.length} fragrance${visible.length === 1 ? "" : "s"} from ${collection}.`
     : "New fragrances are coming to this collection soon.";
-  document.querySelector("#collectionProductTitle").textContent = collection;
-  productGrid.innerHTML = visible.length ? productCards(visible) : '<div class="empty-state">No fragrances in this collection yet.</div>';
+  document.querySelector("#collectionProductTitle").textContent = `${visible.length} fragrance${visible.length === 1 ? "" : "s"}`;
+  if (!visible.length) {
+    productGrid.innerHTML = '<div class="empty-state">No fragrances in this collection yet.</div>';
+    return;
+  }
+
+  const sortSelect = document.querySelector("#sortSelect");
+  if (sortSelect && sortSelect.dataset.bound !== "true") {
+    sortSelect.dataset.bound = "true";
+    sortSelect.addEventListener("input", () => renderCollectionPage());
+  }
+  productGrid.innerHTML = productCards(sortProducts(visible, sortSelect?.value));
   bindAddToBag(productGrid);
 }
 

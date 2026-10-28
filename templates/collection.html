@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Collection | Aura Society Co.</title>
     <meta name="description" content="Shop an Aura Society Co. fragrance collection.">
-    <link rel="stylesheet" href="styles.css?v=photos-20261027">
+    <link rel="stylesheet" href="styles.css?v=browse-20261027">
   </head>
   <body data-page="collection">
     <div id="topBanner" class="top-banner">Free standard shipping on fragrance orders $100+ USD</div>
@@ -38,7 +38,15 @@
       <section class="retail-section product-section">
         <div class="retail-section-head">
           <h2 id="collectionProductTitle">Fragrances</h2>
-          <a href="collections.html">All collections</a>
+          <div class="shop-controls">
+            <select id="sortSelect" class="control-input" aria-label="Sort fragrances">
+              <option value="featured">Featured</option>
+              <option value="price-low">Price: low to high</option>
+              <option value="price-high">Price: high to low</option>
+              <option value="name">Name</option>
+            </select>
+            <a href="collections.html">Shop all</a>
+          </div>
         </div>
         <div id="productGrid" class="product-grid retail-product-grid"></div>
       </section>
@@ -58,7 +66,7 @@
         <div id="siteSearchResults" class="site-search-results"></div>
       </div>
     </div>
-    <script src="pages.js?v=listings-20261027"></script>
+    <script src="pages.js?v=browse-20261027"></script>
     <script src="search.js?v=photos-20261027"></script>
   </body>
 </html>
