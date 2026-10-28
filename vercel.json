@@ -1,6 +1,7 @@
 {
   "functions": {
-    "api/page.js": { "includeFiles": "templates/**" },
+    "api/page.js": { "includeFiles": "{templates/**,assets/products/manifest.json}" },
+    "api/seo.js": { "includeFiles": "assets/products/manifest.json" },
     "api/create-checkout-session.js": { "includeFiles": "catalog/products.json" },
     "api/products.js": { "includeFiles": "assets/products/manifest.json" }
   },
