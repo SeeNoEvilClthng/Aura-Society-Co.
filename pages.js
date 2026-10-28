@@ -212,9 +212,13 @@ function renderCollectionPage() {
 
   document.title = `${collection} | Aura Society Co.`;
   document.querySelector("#collectionTitle").textContent = collection;
-  document.querySelector("#collectionDescription").textContent = visible.length
-    ? `Shop ${visible.length} fragrance${visible.length === 1 ? "" : "s"} from ${collection}.`
-    : "New fragrances are coming to this collection soon.";
+  // Keep the brand introduction the server already rendered; fill in only the placeholder.
+  const description = document.querySelector("#collectionDescription");
+  if (description.textContent.trim() === "Shop this fragrance collection.") {
+    description.textContent = visible.length
+      ? `Shop ${visible.length} fragrance${visible.length === 1 ? "" : "s"} from ${collection}.`
+      : "New fragrances are coming to this collection soon.";
+  }
   document.querySelector("#collectionProductTitle").textContent = `${visible.length} fragrance${visible.length === 1 ? "" : "s"}`;
   if (!visible.length) {
     productGrid.innerHTML = '<div class="empty-state">No fragrances in this collection yet.</div>';
