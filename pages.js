@@ -16,7 +16,7 @@ async function initPage() {
     updateCartCount();
 
     const page = document.body.dataset.page;
-    if (page === "gifts") renderGiftsPage();
+    if (page === "gifts" || page === "guide") renderGiftsPage();
     if (page === "collections") renderCollectionsPage();
     if (page === "collection") renderCollectionPage();
     if (page === "product") renderProductPage();
@@ -99,7 +99,7 @@ async function fetchProducts() {
 
 function rerenderCurrentPage() {
   const page = document.body.dataset.page;
-  if (page === "gifts") renderGiftsPage();
+  if (page === "gifts" || page === "guide") renderGiftsPage();
   if (page === "collections") renderCollectionsPage();
   if (page === "collection") renderCollectionPage();
   if (page === "product") renderProductPage();
@@ -239,7 +239,7 @@ function renderGiftsPage() {
     const picks = grid.dataset.giftIds.split(",")
       .map((id) => products.find((product) => product.id === id.trim()))
       .filter((product) => product && inStock(product) && !used.has(product.id));
-    if (picks.length && picks.length < 8) {
+    if (grid.dataset.fill !== "false" && picks.length && picks.length < 8) {
       const low = Math.min(...picks.map((product) => Number(product.price)));
       const high = Math.max(...picks.map((product) => Number(product.price)));
       const extras = products.filter((product) => inStock(product)

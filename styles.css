@@ -3746,3 +3746,28 @@ button {
   background: #ffffff;
   color: #7a1018;
 }
+
+/* Fragrance guide pages */
+.guide-copy {
+  max-width: 820px;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.guide-copy h2 {
+  margin-top: 1.6em;
+}
+
+.guide-copy ul {
+  padding-left: 1.2em;
+}
+
+.guide-copy li + li {
+  margin-top: 0.5em;
+}
+
+.guide-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
