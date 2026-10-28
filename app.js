@@ -8,7 +8,7 @@ const currency = new Intl.NumberFormat("en-US", {
 
 const defaultSite = {
   topBanner: "Free standard shipping on fragrance orders $100+ USD",
-  navLinks: "Shop All, Creed, Tom Ford, Parfums de Marly, Dior, Chanel, Help",
+  navLinks: "Shop All, Gifts, Creed, Tom Ford, Parfums de Marly, Dior, Chanel, Help",
   heroKicker: "100% authentic bottles",
   heroTitle: "Authentic Designer & Niche Fragrances",
   heroSubtitle: "Creed, Tom Ford, Parfums de Marly, Dior, Chanel and more. Free standard shipping on orders $100+.",
@@ -559,6 +559,7 @@ function splitList(value) {
 function navHref(label) {
   const normalized = String(label || "").toLowerCase();
   if (/help|faq|contact|shipping|return/.test(normalized)) return "help.html";
+  if (/gift|holiday/.test(normalized)) return "gifts.html";
   if (/shop all|all fragrances|collections|new arrivals|best sellers/.test(normalized)) return "collections.html";
   return matchingProducts(label).length ? collectionHref(label) : "";
 }

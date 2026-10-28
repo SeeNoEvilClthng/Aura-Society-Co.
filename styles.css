@@ -3635,3 +3635,77 @@ button {
     gap: 8px;
   }
 }
+
+/* Holiday gift guide */
+.gift-hero {
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.8)),
+    radial-gradient(circle at 75% 20%, rgba(220, 167, 45, 0.45), transparent 32%),
+    radial-gradient(circle at 15% 85%, rgba(150, 20, 30, 0.55), transparent 40%),
+    linear-gradient(135deg, #2a0508, #7a1018 45%, #050505);
+}
+
+.gift-section {
+  scroll-margin-top: 90px;
+}
+
+.gift-blurb {
+  margin: 6px 0 0;
+  color: #555555;
+}
+
+.gift-notes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.gift-notes .help-card:hover {
+  transform: none;
+}
+
+.gift-notes a {
+  color: #050505;
+  font-weight: 700;
+}
+
+.home-gift-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: clamp(18px, 3vw, 32px) clamp(18px, 3vw, 44px) 0;
+  padding: clamp(20px, 3vw, 32px);
+  color: #ffffff;
+  text-decoration: none;
+  background:
+    radial-gradient(circle at 85% 20%, rgba(220, 167, 45, 0.5), transparent 35%),
+    linear-gradient(135deg, #2a0508, #7a1018 55%, #050505);
+}
+
+.home-gift-banner strong {
+  display: block;
+  font-size: clamp(1.4rem, 3vw, 2.2rem);
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.home-gift-banner span {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.home-gift-banner em {
+  font-style: normal;
+  font-weight: 900;
+  padding: 12px 20px;
+  background: #d9a72d;
+  color: #050505;
+  text-transform: uppercase;
+}
+
+@media (max-width: 760px) {
+  .gift-notes {
+    grid-template-columns: 1fr;
+  }
+}

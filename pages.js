@@ -16,6 +16,7 @@ async function initPage() {
     updateCartCount();
 
     const page = document.body.dataset.page;
+    if (page === "gifts") renderGiftsPage();
     if (page === "collections") renderCollectionsPage();
     if (page === "collection") renderCollectionPage();
     if (page === "product") renderProductPage();
@@ -98,6 +99,7 @@ async function fetchProducts() {
 
 function rerenderCurrentPage() {
   const page = document.body.dataset.page;
+  if (page === "gifts") renderGiftsPage();
   if (page === "collections") renderCollectionsPage();
   if (page === "collection") renderCollectionPage();
   if (page === "product") renderProductPage();
@@ -226,6 +228,29 @@ function renderCollectionPage() {
   }
   productGrid.innerHTML = productCards(sortProducts(visible, sortSelect?.value));
   bindAddToBag(productGrid);
+}
+
+// Each gift section lists hand-picked product ids in data-gift-ids. Picks that are
+// sold out or removed are skipped, and the section is topped up with in-stock
+// bottles from the same price range so it never looks empty.
+function renderGiftsPage() {
+  const used = new Set();
+  document.querySelectorAll("[data-gift-ids]").forEach((grid) => {
+    const picks = grid.dataset.giftIds.split(",")
+      .map((id) => products.find((product) => product.id === id.trim()))
+      .filter((product) => product && inStock(product) && !used.has(product.id));
+    if (picks.length && picks.length < 8) {
+      const low = Math.min(...picks.map((product) => Number(product.price)));
+      const high = Math.max(...picks.map((product) => Number(product.price)));
+      const extras = products.filter((product) => inStock(product)
+        && !used.has(product.id) && !picks.includes(product)
+        && Number(product.price) >= low && Number(product.price) <= high);
+      picks.push(...extras.slice(0, 8 - picks.length));
+    }
+    picks.forEach((product) => used.add(product.id));
+    grid.innerHTML = productCards(picks);
+    bindAddToBag(grid);
+  });
 }
 
 function renderProductPage() {
