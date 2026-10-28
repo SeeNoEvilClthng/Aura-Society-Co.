@@ -386,6 +386,11 @@ async function serveSeoRoute(request, response, requestUrl) {
   const imageMatch = /^\/images\/products\/([^/]+)$/.exec(requestUrl.pathname);
   if (imageMatch) {
     const product = readProducts().find((entry) => entry.id === decodeURIComponent(imageMatch[1]));
+    if (product && /^(https?:\/\/|\/)/.test(product.image)) {
+      response.writeHead(302, { Location: product.image });
+      response.end();
+      return true;
+    }
     const image = product && seo.decodeProductImage(product.image);
     if (!image) {
       send(404, "text/plain; charset=utf-8", "Image not found.");

@@ -30,7 +30,7 @@ module.exports = async function handler(request, response) {
 
   if (query.file === "image") {
     const product = products.find((entry) => entry.id === query.id);
-    if (product && /^https?:\/\//.test(product.image)) {
+    if (product && /^(https?:\/\/|\/)/.test(product.image)) {
       response.statusCode = 302;
       response.setHeader("Location", product.image);
       response.end();
