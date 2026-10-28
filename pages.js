@@ -251,6 +251,7 @@ function renderProductPage() {
 
   const soldOut = !inStock(product);
   const toFreeShipping = FREE_SHIPPING_THRESHOLD - Number(product.price);
+  if (typeof auraTrack === "function") auraTrack("view_item", { value: Number(product.price), items: [gaItem(product)] });
 
   document.title = `${product.name} | Aura Society Co.`;
   detail.innerHTML = `
@@ -411,6 +412,13 @@ function renderCheckoutPage() {
 
     checkoutButton.disabled = true;
     checkoutButton.textContent = "Opening payment...";
+
+    if (typeof auraTrack === "function") {
+      const gaItems = latestItems.map((item) => gaItem(item.product, item.quantity));
+      const value = latestItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+      auraTrack("begin_checkout", { value, items: gaItems });
+      rememberPendingPurchase(gaItems, value);
+    }
 
     if (formData.get("marketing")) {
       // Opt-in from the checkbox; a failed signup must never hold up payment.
@@ -575,6 +583,7 @@ function addToCart(productId) {
   updateCartCount();
   if (document.body.dataset.page === "checkout") renderCheckoutPage();
   showToast(`${product.name} added to bag.`);
+  if (typeof auraTrack === "function") auraTrack("add_to_cart", { value: Number(product.price), items: [gaItem(product)] });
 }
 
 function getActiveCartItems() {

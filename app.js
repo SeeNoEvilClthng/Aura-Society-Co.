@@ -510,6 +510,7 @@ function addToCart(productId) {
   saveCart();
   renderCart();
   showToast(`${product.name} added to bag.`);
+  if (typeof auraTrack === "function") auraTrack("add_to_cart", { value: Number(product.price), items: [gaItem(product)] });
 }
 
 function updateQuantity(productId, change) {

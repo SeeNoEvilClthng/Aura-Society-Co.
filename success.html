@@ -7,6 +7,8 @@
     <meta name="description" content="Aura Society Co. order confirmation.">
     <meta name="robots" content="noindex">
     <link rel="stylesheet" href="styles.css?v=browse-20261027">
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8GLJ2NQNQK"></script>
+    <script src="analytics.js?v=ga-20261028"></script>
   </head>
   <body>
     <header class="site-header">
@@ -34,6 +36,7 @@
     <script>
       localStorage.removeItem("auraSocietyCart");
       const orderSession = new URLSearchParams(window.location.search).get("session_id");
+      if (typeof reportPendingPurchase === "function") reportPendingPurchase(orderSession);
       if (orderSession && /^cs_/.test(orderSession)) {
         document.querySelector("#reviewLink").href = `review.html?session=${encodeURIComponent(orderSession)}`;
         document.querySelector("#reviewInvite").classList.remove("hidden");
