@@ -3709,3 +3709,40 @@ button {
     grid-template-columns: 1fr;
   }
 }
+
+/* Black Friday sale bar (sale-banner.js) */
+.sale-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 18px;
+  padding: 10px clamp(18px, 3vw, 44px);
+  font-weight: 900;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.sale-bar-live {
+  background: #d9a72d;
+  color: #050505;
+}
+
+.sale-bar-teaser {
+  background: #7a1018;
+  color: #ffffff;
+}
+
+.sale-bar-clock {
+  padding: 3px 10px;
+  background: #050505;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sale-bar-teaser .sale-bar-clock {
+  background: #ffffff;
+  color: #7a1018;
+}
