@@ -12,6 +12,11 @@ module.exports = async function handler(request, response) {
 
   try {
     if (request.method === "GET") {
+      // Public: lets the welcome popup check an offer is configured, without revealing the code.
+      if (/[?&]offer\b/.test(request.url || "")) {
+        send(200, { enabled: Boolean(getWelcomeOffer()) });
+        return;
+      }
       if (!(await requireAdmin(request, send))) return;
       send(200, { subscribers: await listSubscribers() });
       return;

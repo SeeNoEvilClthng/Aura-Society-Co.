@@ -3771,3 +3771,97 @@ button {
   flex-wrap: wrap;
   gap: 10px;
 }
+
+/* Welcome offer popup (welcome-popup.js) */
+.welcome-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(5, 5, 5, 0.6);
+}
+
+.welcome-card {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  width: min(100%, 440px);
+  padding: clamp(24px, 5vw, 40px);
+  background: #ffffff;
+  color: #050505;
+  text-align: center;
+  border-top: 6px solid #d9a72d;
+}
+
+.welcome-card h2 {
+  margin: 0;
+  font-size: clamp(1.6rem, 6vw, 2.2rem);
+  font-weight: 950;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.welcome-kicker {
+  margin: 0;
+  color: #9c6a14;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.welcome-text,
+.welcome-fine,
+.welcome-message {
+  margin: 0;
+  color: #555555;
+}
+
+.welcome-fine {
+  font-size: 0.8rem;
+}
+
+.welcome-form {
+  display: grid;
+  gap: 10px;
+}
+
+.welcome-form input[type="email"] {
+  padding: 14px;
+  border: 1px solid #cccccc;
+  font: inherit;
+}
+
+.welcome-trap {
+  position: absolute;
+  left: -9999px;
+}
+
+.welcome-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  border: 0;
+  background: none;
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.welcome-code {
+  justify-self: center;
+  padding: 12px 22px;
+  border: 2px dashed #050505;
+  background: #fbf3df;
+  font: inherit;
+  font-size: 1.5rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.welcome-shop {
+  justify-self: center;
+  text-decoration: none;
+}
